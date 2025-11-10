@@ -21,7 +21,7 @@ const routes = [
   { path: '/staff', component: StaffView },
   { path: '/registro-trabajador', component: RegistroTrabajador },
   { path: '/registro-participante', component: RegistroParticipante },
-  { path: '/registro-feipobol', component: RegistroFeipobol },
+  { path: '/premios-feipobol', component: RegistroFeipobol },
   { 
     path: '/generar-entradas', 
     component: GeneradorQREntradas, 

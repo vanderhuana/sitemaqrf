@@ -111,7 +111,17 @@ Participante.belongsTo(Empresa, {
 });
 
 // **RELACIONES DE EMPRESA Y REGISTROS FEIPOBOL**
-// (Sin relación directa - simplificado)
+// Una empresa puede tener muchos registros FEIPOBOL
+Empresa.hasMany(RegistroFeipobol, {
+  foreignKey: 'empresaId',
+  as: 'RegistrosFeipobol',
+  onDelete: 'SET NULL'
+});
+
+RegistroFeipobol.belongsTo(Empresa, {
+  foreignKey: 'empresaId',
+  as: 'Empresa'
+});
 
 // **RELACIONES DEL SISTEMA DE SORTEO FEIPOBOL**
 // Un premio puede tener un ganador

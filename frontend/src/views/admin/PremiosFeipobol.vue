@@ -60,6 +60,20 @@
           placeholder="Buscar premio..." 
           class="input-busqueda"
         />
+        
+        <input 
+          v-model="filtroNombre" 
+          type="text" 
+          placeholder="Buscar por nombre ganador..." 
+          class="input-busqueda"
+        />
+        
+        <input 
+          v-model="filtroCI" 
+          type="text" 
+          placeholder="Buscar por CI..." 
+          class="input-busqueda"
+        />
       </div>
     </div>
 
@@ -107,6 +121,10 @@
             <td class="ganador">
               <div v-if="premio.Ganador" class="info-ganador">
                 <strong>{{ premio.Ganador.Registro?.nombre }} {{ premio.Ganador.Registro?.apellido }}</strong>
+                <div class="datos-ganador">
+                  <small v-if="premio.Ganador.Registro?.ci">CI: {{ premio.Ganador.Registro.ci }}</small>
+                  <small v-if="premio.Ganador.Registro?.numeroSorteo">N°: {{ premio.Ganador.Registro.numeroSorteo }}</small>
+                </div>
                 <small>{{ formatearFecha(premio.Ganador.fechaGanado) }}</small>
                 <div class="estado-entrega">
                   <span 
@@ -139,6 +157,15 @@
                   title="Marcar como entregado"
                 >
                   📦
+                </button>
+                
+                <button 
+                  v-if="premio.Ganador"
+                  @click="descargarCupon(premio)" 
+                  class="btn-descargar"
+                  title="Descargar cupón del ganador"
+                >
+                  💾
                 </button>
                 
                 <button 
@@ -346,6 +373,8 @@ const premioEditando = ref(null)
 const guardando = ref(false)
 const busqueda = ref('')
 const filtroEstado = ref('')
+const filtroNombre = ref('')
+const filtroCI = ref('')
 
 // Estado de paginación
 const paginaActual = ref(1)
@@ -378,6 +407,26 @@ const premiosFiltrados = computed(() => {
       premio.nombrePremio.toLowerCase().includes(termino) ||
       premio.descripcionPremio?.toLowerCase().includes(termino) ||
       premio.numeroSorteo.toString().includes(termino)
+    )
+  }
+
+  // Filtrar por nombre de ganador
+  if (filtroNombre.value) {
+    const termino = filtroNombre.value.toLowerCase()
+    resultado = resultado.filter(premio => 
+      premio.Ganador && (
+        premio.Ganador.Registro?.nombre?.toLowerCase().includes(termino) ||
+        premio.Ganador.Registro?.apellido?.toLowerCase().includes(termino)
+      )
+    )
+  }
+
+  // Filtrar por CI
+  if (filtroCI.value) {
+    const termino = filtroCI.value.toLowerCase()
+    resultado = resultado.filter(premio => 
+      premio.Ganador && 
+      premio.Ganador.Registro?.ci?.toLowerCase().includes(termino)
     )
   }
 
@@ -538,6 +587,92 @@ const marcarEntregado = (ganador) => {
   }
 }
 
+const descargarCupon = async (premio) => {
+  try {
+    if (!premio.Ganador) {
+      alert('Este premio aún no tiene ganador')
+      return
+    }
+
+    // Obtener información del registro del ganador
+    const registroId = premio.Ganador.registroId
+    
+    if (!registroId) {
+      alert('No se encontró el ID del registro del ganador')
+      console.error('Premio completo:', premio)
+      return
+    }
+
+    // Buscar el registro completo para obtener el token (usando ruta admin)
+    try {
+      const response = await fetch(`/api/admin/registro-feipobol/${registroId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('sisqr_token')}`
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
+      }
+      
+      const data = await response.json()
+      const registro = data.registro
+      
+      if (!registro || !registro.token) {
+        alert('No se encontró el token del registro')
+        console.error('Datos recibidos:', data)
+        return
+      }
+
+      // Preparar datos para generar la credencial
+      const datosGanador = {
+        nombre: registro.nombre || premio.Ganador.Registro?.nombre || '',
+        apellido: registro.apellido || premio.Ganador.Registro?.apellido || '',
+        ci: registro.ci || premio.Ganador.Registro?.ci || '',
+        telefono: registro.telefono || '',
+        correo: registro.correo || '',
+        empresaId: registro.empresaId || premio.Ganador.Registro?.empresaId || ''
+      }
+
+      const participanteCompleto = {
+        ...registro,
+        id: registro.id,
+        token: registro.token,
+        nombre: registro.nombre,
+        apellido: registro.apellido,
+        ci: registro.ci
+      }
+
+      // Obtener nombre de la empresa desde el registro (si existe la relación Empresa)
+      let empresaNombre = ''
+      if (registro.Empresa) {
+        empresaNombre = registro.Empresa.nombre
+      }
+
+      // Importar dinámicamente el generador de credenciales
+      const { generarCredencialPDF } = await import('@/utils/credencialGenerator')
+      
+      // Generar y descargar el cupón
+      await generarCredencialPDF(
+        participanteCompleto,
+        datosGanador,
+        empresaNombre,
+        'PARTICIPANTE'
+      )
+
+      alert('✅ Cupón descargado exitosamente')
+      
+    } catch (fetchError) {
+      console.error('Error obteniendo registro:', fetchError)
+      alert(`Error al obtener la información del ganador: ${fetchError.message}`)
+    }
+    
+  } catch (error) {
+    console.error('Error descargando cupón:', error)
+    alert('Error al descargar el cupón')
+  }
+}
+
 const cerrarModal = () => {
   mostrarModalCrear.value = false
   premioEditando.value = null
@@ -692,6 +827,7 @@ onMounted(() => {
   display: flex;
   gap: 15px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .select-filtro,
@@ -710,7 +846,7 @@ onMounted(() => {
 }
 
 .input-busqueda {
-  min-width: 200px;
+  min-width: 180px;
 }
 
 /* TABLA */
@@ -796,6 +932,21 @@ onMounted(() => {
   color: #2C3E50;
 }
 
+.info-ganador .datos-ganador {
+  display: flex;
+  gap: 10px;
+  margin-top: 3px;
+}
+
+.info-ganador .datos-ganador small {
+  background: #E9ECEF;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #495057;
+}
+
 .info-ganador small {
   color: #6C757D;
   font-size: 0.75rem;
@@ -829,6 +980,7 @@ onMounted(() => {
 
 .btn-editar,
 .btn-entregar,
+.btn-descargar,
 .btn-eliminar {
   background: none;
   border: none;
@@ -845,6 +997,10 @@ onMounted(() => {
 
 .btn-entregar:hover {
   background-color: #E8F5E8;
+}
+
+.btn-descargar:hover {
+  background-color: #FFF3E0;
 }
 
 .btn-eliminar:hover {

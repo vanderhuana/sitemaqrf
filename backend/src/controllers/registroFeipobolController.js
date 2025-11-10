@@ -224,7 +224,15 @@ const registroFeipobolController = {
     try {
       const { id } = req.params;
 
-      const registro = await RegistroFeipobol.findByPk(id);
+      const registro = await RegistroFeipobol.findByPk(id, {
+        include: [
+          {
+            model: require('../models').Empresa,
+            as: 'Empresa',
+            attributes: ['id', 'nombre', 'descripcion']
+          }
+        ]
+      });
 
       if (!registro) {
         return res.status(404).json({

@@ -134,7 +134,7 @@
               </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group form-group-empresa">
               <label>Empresa/Stand: <span class="requerido">*</span></label>
               <select 
                 v-model="formData.empresaId" 
@@ -959,6 +959,56 @@ const cerrarModalDescarga = () => {
   gap: 20px;
 }
 
+/* Estilos específicos para el campo de Empresa/Stand */
+.form-group-empresa {
+  grid-column: 1 / -1;
+  margin-bottom: 10px;
+}
+
+.form-group-empresa select.form-control {
+  font-weight: 500;
+  color: #2C3E50;
+  background: linear-gradient(to right, #ffffff, #f8f9fa);
+  border: 2px solid #6B9080;
+  padding: 14px 18px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.form-group-empresa select.form-control:hover:not(:disabled) {
+  border-color: #4A7C59;
+  background: #ffffff;
+}
+
+.form-group-empresa select.form-control:focus {
+  border-color: #FF6B6B;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+}
+
+.form-group-empresa select.form-control:disabled {
+  background: #e9ecef;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.form-group-empresa option {
+  padding: 12px;
+  font-size: 0.95rem;
+}
+
+.form-group-empresa .text-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFF3CD;
+  padding: 10px 15px;
+  border-radius: 8px;
+  border-left: 4px solid #FFC107;
+  margin-top: 10px;
+  font-weight: 600;
+}
+
 .form-row .form-group {
   min-width: 0; /* Permite que los elementos se encojan si es necesario */
 }
@@ -1405,6 +1455,20 @@ const cerrarModalDescarga = () => {
   .form-row {
     grid-template-columns: 1fr !important;
     gap: 12px;
+  }
+
+  .form-group-empresa {
+    grid-column: 1;
+  }
+
+  .form-group-empresa select.form-control {
+    padding: 12px 14px;
+    font-size: 0.95rem;
+  }
+
+  .form-group-empresa option {
+    font-size: 0.9rem;
+    padding: 10px;
   }
 
   .form-group {
