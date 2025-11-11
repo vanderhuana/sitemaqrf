@@ -1891,8 +1891,9 @@ watch([busqueda, filtroEmpresa, filtroEstado], () => {
   border-radius: 20px;
   padding: 0;
   width: 95%;
-  max-width: 1100px;
-  max-height: 90vh;
+  max-width: 900px;
+  max-height: 85vh;
+  margin: 20px auto;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -1914,7 +1915,7 @@ watch([busqueda, filtroEmpresa, filtroEstado], () => {
 /* Header del Modal */
 .modal-header-empresas {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 25px 30px;
+  padding: 20px 25px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1969,7 +1970,7 @@ watch([busqueda, filtroEmpresa, filtroEstado], () => {
 
 /* Contenido del Modal con scroll */
 .modal-empresas > div:not(.modal-header-empresas) {
-  padding: 25px 30px;
+  padding: 20px 25px;
   overflow-y: auto;
   flex: 1;
 }
