@@ -39,8 +39,17 @@ api.interceptors.response.use(
       localStorage.removeItem('user')
       localStorage.removeItem('refreshToken')
       
+      // Limpiar el store de Pinia también
+      const authStore = useAuthStore()
+      if (authStore) {
+        authStore.user = null
+        authStore.token = null
+      }
+      
       // Redirigir al login
-      window.location.href = '/login'
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }

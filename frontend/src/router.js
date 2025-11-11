@@ -40,11 +40,17 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   console.log('🛣️ Router Guard - Navegando de', from.path, 'a', to.path)
   
-  // Obtener usuario desde localStorage (store auth usa 'sisqr_user')
+  // Obtener usuario y token desde localStorage
   let usuario = null
+  let token = null
+  
   try {
     const storedUser = localStorage.getItem('sisqr_user')
+    token = localStorage.getItem('sisqr_token') || localStorage.getItem('token')
+    
     console.log('📦 Usuario en localStorage:', storedUser)
+    console.log('🔑 Token existe:', !!token)
+    
     usuario = JSON.parse(storedUser || 'null')
     console.log('👤 Usuario parseado:', usuario)
     
@@ -54,15 +60,28 @@ router.beforeEach((to, from, next) => {
   } catch (e) {
     console.error('❌ Error parseando usuario:', e)
     usuario = null
+    token = null
   }
 
   console.log('🔒 Ruta requiere auth:', to.meta.requiresAuth)
   console.log('🎯 Ruta requiere rol:', to.meta.requiresRole)
 
   // Verificar autenticación requerida
-  if (to.meta.requiresAuth && !usuario) {
-    console.log('⛔ No autenticado, redirigiendo a /login')
-    return next('/login')
+  if (to.meta.requiresAuth) {
+    // Si no hay usuario O no hay token, destruir sesión y redirigir
+    if (!usuario || !token) {
+      console.log('⛔ No autenticado o token faltante, destruyendo sesión')
+      
+      // Limpiar completamente localStorage
+      localStorage.removeItem('sisqr_token')
+      localStorage.removeItem('sisqr_user')
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      localStorage.removeItem('refreshToken')
+      
+      console.log('🚪 Redirigiendo a /login')
+      return next('/login')
+    }
   }
 
   // Obtener el rol del usuario (soportar ambas variantes)

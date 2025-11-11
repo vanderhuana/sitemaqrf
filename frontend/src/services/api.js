@@ -63,8 +63,10 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('sisqr_user')
       localStorage.removeItem('refreshToken')
       
-      // Redirigir al login
-      window.location.href = '/login'
+      // Redirigir al login solo si no estamos ya en la página de login
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }

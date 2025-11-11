@@ -156,7 +156,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { authService } from './services/api.js'
 import DashboardAdmin from './components/DashboardAdmin.vue'
@@ -187,11 +187,59 @@ const esRutaAdmin = computed(() => {
 })
 
 // Verificar si ya hay un usuario logueado al cargar la aplicación
+let verificacionIntervalId = null
+
 onMounted(() => {
   const user = authService.getCurrentUser()
   if (user) {
     usuarioActual.value = user
     console.log('Usuario ya autenticado:', user)
+  }
+  
+  // Verificar periódicamente si el token sigue siendo válido
+  // Esto detectará tokens expirados incluso si el usuario no hace requests
+  verificacionIntervalId = setInterval(async () => {
+    const token = localStorage.getItem('sisqr_token') || localStorage.getItem('token')
+    const storedUser = localStorage.getItem('sisqr_user') || localStorage.getItem('user')
+    
+    // Si hay token y usuario almacenado, verificar si sigue válido
+    if (token && storedUser) {
+      try {
+        // Hacer una petición ligera para verificar el token
+        // Puedes cambiar esto por cualquier endpoint protegido
+        const response = await fetch('/api/auth/verify', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        
+        if (response.status === 401) {
+          console.warn('⚠️ Token expirado detectado en verificación periódica')
+          // Limpiar sesión y redirigir
+          localStorage.removeItem('sisqr_token')
+          localStorage.removeItem('sisqr_user')
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+          localStorage.removeItem('refreshToken')
+          
+          usuarioActual.value = null
+          
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login'
+          }
+        }
+      } catch (error) {
+        // Ignorar errores de red, solo interesa el 401
+        console.log('Error en verificación periódica (ignorado):', error.message)
+      }
+    }
+  }, 60000) // Verificar cada 60 segundos
+})
+
+onUnmounted(() => {
+  // Limpiar intervalo cuando el componente se desmonte
+  if (verificacionIntervalId) {
+    clearInterval(verificacionIntervalId)
   }
 })
 
