@@ -235,47 +235,15 @@ export const ticketService = {
 export const authService = {
   async login(email, password) {
     try {
-      console.log('Intentando login con:', { email, password })
-      console.log('Usando proxy de Vite para /api/auth/login')
-      
-      // Probar primero con fetch directo usando el proxy de Vite
-      try {
-        const testResponse = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ login: email, password })
-        })
-        
-        console.log('Test fetch - Status:', testResponse.status)
-        console.log('Test fetch - Content-Type:', testResponse.headers.get('content-type'))
-        
-        const testData = await testResponse.text()
-        console.log('Test fetch - Response raw:', testData.substring(0, 200) + '...')
-        
-        // Si la respuesta es HTML, hay un problema
-        if (testData.includes('<html>')) {
-          console.error('❌ Respuesta es HTML, backend no está respondiendo correctamente')
-          throw new Error('Backend no está respondiendo JSON en /api/auth/login')
-        }
-        
-        // Si llegamos aquí, la respuesta es válida
-        console.log('✅ Fetch directo exitoso, continuando con axios...')
-        
-      } catch (fetchError) {
-        console.error('❌ Error en test fetch:', fetchError)
-        throw fetchError
-      }
+      console.log('🔐 Intentando login con:', { email, password: '***' })
       
       const response = await apiClient.post('/api/auth/login', {
         login: email,  // Backend espera 'login' no 'email'
         password
       })
       
-      console.log('Status de respuesta:', response.status)
-      console.log('Headers de respuesta:', response.headers)
-      console.log('Respuesta del backend:', response.data)
+      console.log('✅ Status de respuesta:', response.status)
+      console.log('✅ Respuesta del backend:', response.data)
       
       // Verificar si la respuesta tiene la estructura esperada
       if (response.data && response.data.token) {
@@ -325,7 +293,9 @@ export const authService = {
         }
       }
     } catch (error) {
-      console.error('Error en login:', error)
+      console.error('❌ Error en login:', error)
+      console.error('📊 Response status:', error.response?.status)
+      console.error('📊 Response data:', error.response?.data)
       
       // Verificar si es un error de red o del servidor
       if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
@@ -335,9 +305,12 @@ export const authService = {
         }
       }
       
+      // Error del backend (400, 401, 500, etc.)
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Error de conexión con el servidor'
+      
       return {
         success: false,
-        message: error.response?.data?.message || 'Error de conexión con el servidor'
+        message: errorMessage
       }
     }
   },
@@ -704,12 +677,22 @@ export const feipobolService = {
 
   async getAllRegistrosFeipobol() {
     try {
-      const response = await apiClient.get('/api/registro-feipobol')
+      console.log('📡 Llamando a /api/admin/registro-feipobol')
+      console.log('🔑 Token:', localStorage.getItem('token') ? 'Existe' : 'No existe')
+      
+      const response = await apiClient.get('/api/admin/registro-feipobol')
+      
+      console.log('📊 Status:', response.status)
       console.log('📊 Respuesta registros FEIPOBOL:', response.data)
-      return { success: true, data: response.data.data || response.data }
+      
+      return { success: true, data: response.data.registros || response.data.data || response.data }
     } catch (error) {
-      console.error('Error obteniendo registros FEIPOBOL:', error)
-      return { success: false, error: error.response?.data?.error || 'Error al obtener registros FEIPOBOL' }
+      console.error('❌ Error obteniendo registros FEIPOBOL:', error)
+      console.error('📊 Error status:', error.response?.status)
+      console.error('📊 Error data:', error.response?.data)
+      console.error('📊 Error message:', error.message)
+      
+      return { success: false, data: [], error: error.response?.data?.message || error.message || 'Error al obtener registros FEIPOBOL' }
     }
   },
 
@@ -1129,6 +1112,103 @@ export const configuracionService = {
     } catch (error) {
       console.error(`Error toggling formulario ${tipo}:`, error)
       return { success: false, error: error.response?.data?.error || 'Error al cambiar estado' }
+    }
+  }
+}
+
+// Servicio de credenciales VIP
+export const credencialesVIPService = {
+  async crear(tipo, observaciones = null) {
+    try {
+      const response = await apiClient.post('/api/credenciales-vip', { tipo, observaciones })
+      return response.data
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Error al crear credencial VIP' }
+    }
+  },
+
+  async listar(filtros = {}) {
+    try {
+      const response = await apiClient.get('/api/credenciales-vip', { params: filtros })
+      return response.data
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Error al listar credenciales VIP' }
+    }
+  },
+
+  async obtener(id) {
+    try {
+      const response = await apiClient.get(`/api/credenciales-vip/${id}`)
+      return response.data
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Error al obtener credencial VIP' }
+    }
+  },
+
+  async consultar(token) {
+    try {
+      const response = await apiClient.post('/api/credenciales-vip/consultar', { token })
+      return response.data
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Error al consultar credencial VIP' }
+    }
+  },
+
+  async validar(token) {
+    try {
+      const response = await apiClient.post('/api/credenciales-vip/validar', { token })
+      return response.data
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Error al validar credencial VIP' }
+    }
+  },
+
+  async toggleActivo(id) {
+    try {
+      const response = await apiClient.put(`/api/credenciales-vip/${id}/toggle`)
+      return response.data
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Error al cambiar estado de credencial VIP' }
+    }
+  },
+
+  async resetearValidaciones(id) {
+    try {
+      const response = await apiClient.put(`/api/credenciales-vip/${id}/reset`)
+      return response.data
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Error al resetear validaciones' }
+    }
+  },
+
+  async eliminar(id) {
+    try {
+      const response = await apiClient.delete(`/api/credenciales-vip/${id}`)
+      return response.data
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Error al eliminar credencial VIP' }
+    }
+  },
+
+  async descargarImagen(id) {
+    try {
+      const response = await apiClient.get(`/api/credenciales-vip/${id}/imagen`, {
+        responseType: 'blob'
+      })
+      
+      // Crear un enlace temporal para descargar
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `credencial-vip-${id}.png`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+      
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Error al descargar imagen' }
     }
   }
 }

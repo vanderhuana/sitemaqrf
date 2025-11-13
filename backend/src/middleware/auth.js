@@ -17,11 +17,16 @@ if (!JWT_SECRET) {
 // Middleware para verificar token JWT
 const authenticateToken = async (req, res, next) => {
   try {
+    console.log('🔐 authenticateToken - Ruta:', req.method, req.originalUrl);
+    
     // Obtener el token del header Authorization
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
     
+    console.log('🔑 Token presente:', !!token);
+    
     if (!token) {
+      console.log('❌ No hay token');
       return res.status(401).json({
         error: 'Token de acceso requerido',
         message: 'Debes estar autenticado para acceder a este recurso'
@@ -30,6 +35,7 @@ const authenticateToken = async (req, res, next) => {
     
     // Verificar el token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('✅ Token decodificado - userId:', decoded.userId, 'role:', decoded.role);
     
     // Buscar el usuario en la base de datos
     const user = await User.findByPk(decoded.userId, {
@@ -37,13 +43,17 @@ const authenticateToken = async (req, res, next) => {
     });
     
     if (!user) {
+      console.log('❌ Usuario no encontrado en BD');
       return res.status(401).json({
         error: 'Usuario no encontrado',
         message: 'El token es válido pero el usuario no existe'
       });
     }
     
+    console.log('👤 Usuario encontrado:', user.username, 'rol:', user.role);
+    
     if (!user.isActive) {
+      console.log('❌ Usuario inactivo');
       return res.status(403).json({
         error: 'Usuario inactivo',
         message: 'Tu cuenta ha sido desactivada'
@@ -52,6 +62,7 @@ const authenticateToken = async (req, res, next) => {
     
     // Agregar información del usuario a la request
     req.user = user;
+    console.log('✅ authenticateToken - Pasando al siguiente middleware');
     next();
     
   } catch (error) {
@@ -132,7 +143,11 @@ const generateRefreshToken = (user) => {
 // Middleware para autorizar roles específicos
 const authorizeRoles = (...allowedRoles) => {
   return (req, res, next) => {
+    console.log('🔒 authorizeRoles - Verificando roles permitidos:', allowedRoles);
+    console.log('👤 Usuario actual:', req.user?.username, 'rol:', req.user?.role);
+    
     if (!req.user) {
+      console.log('❌ No hay usuario en request');
       return res.status(401).json({
         error: 'No autenticado',
         message: 'Debes estar autenticado para acceder a este recurso'
@@ -140,12 +155,14 @@ const authorizeRoles = (...allowedRoles) => {
     }
 
     if (!allowedRoles.includes(req.user.role)) {
+      console.log(`❌ Rol ${req.user.role} no está en [${allowedRoles.join(', ')}]`);
       return res.status(403).json({
         error: 'Acceso denegado',
         message: `Este recurso requiere uno de los siguientes roles: ${allowedRoles.join(', ')}`
       });
     }
 
+    console.log('✅ authorizeRoles - Usuario autorizado');
     next();
   };
 };

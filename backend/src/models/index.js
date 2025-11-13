@@ -13,6 +13,7 @@ const RegistroFeipobol = require('./RegistroFeipobol')(sequelize);
 const PremioFeipobol = require('./PremioFeipobol')(sequelize);
 const GanadorFeipobol = require('./GanadorFeipobol')(sequelize);
 const Configuracion = require('./Configuracion')(sequelize);
+const CredencialVIP = require('./CredencialVIP')(sequelize);
 
 // Configurar las asociaciones entre modelos
 
@@ -306,6 +307,7 @@ module.exports = {
   PremioFeipobol,
   GanadorFeipobol,
   Configuracion,
+  CredencialVIP,
   syncModels,
   seedData
 };

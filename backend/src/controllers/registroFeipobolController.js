@@ -8,9 +8,13 @@ const registroFeipobolController = {
   // Obtener todos los registros (solo admin)
   async getAll(req, res) {
     try {
+      console.log('📋 Intentando obtener todos los registros FEIPOBOL...');
+      
       const registros = await RegistroFeipobol.findAll({
         order: [['fechaRegistro', 'DESC']]
       });
+
+      console.log(`✅ Registros obtenidos: ${registros.length}`);
 
       res.json({
         success: true,
@@ -18,10 +22,15 @@ const registroFeipobolController = {
         total: registros.length
       });
     } catch (error) {
-      console.error('Error obteniendo registros FEIPOBOL:', error);
+      console.error('❌ Error obteniendo registros FEIPOBOL:');
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      
       res.status(500).json({
         success: false,
-        message: 'Error interno del servidor'
+        message: 'Error interno del servidor',
+        error: error.message
       });
     }
   },

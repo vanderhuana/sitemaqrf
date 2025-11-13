@@ -80,8 +80,12 @@ const register = async (req, res) => {
 // Login de usuario
 const login = async (req, res) => {
   try {
+    console.log('🔐 Solicitud de login recibida')
+    console.log('📦 Body:', { login: req.body.login, password: '***' })
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('❌ Errores de validación:', errors.array())
       return res.status(400).json({
         error: 'Datos inválidos',
         details: errors.array()
@@ -90,10 +94,15 @@ const login = async (req, res) => {
     
     const { login, password } = req.body;
     
+    console.log('🔍 Buscando usuario:', login)
+    
     // Buscar usuario por email o username
     const user = await User.findByLogin(login);
     
+    console.log('👤 Usuario encontrado:', user ? `${user.email} (${user.username})` : 'No encontrado')
+    
     if (!user) {
+      console.log('❌ Usuario no encontrado')
       return res.status(401).json({
         error: 'Credenciales inválidas',
         message: 'Email/usuario o contraseña incorrectos'
@@ -102,28 +111,40 @@ const login = async (req, res) => {
     
     // Verificar si el usuario está activo
     if (!user.isActive) {
+      console.log('❌ Usuario inactivo')
       return res.status(403).json({
         error: 'Cuenta desactivada',
         message: 'Tu cuenta ha sido desactivada. Contacta al administrador.'
       });
     }
     
+    console.log('🔑 Verificando contraseña...')
+    
     // Verificar contraseña
     const isPasswordValid = await user.comparePassword(password);
     
+    console.log('🔑 Contraseña válida:', isPasswordValid)
+    
     if (!isPasswordValid) {
+      console.log('❌ Contraseña incorrecta')
       return res.status(401).json({
         error: 'Credenciales inválidas',
         message: 'Email/usuario o contraseña incorrectos'
       });
     }
     
+    console.log('✅ Generando tokens...')
+    
     // Generar tokens
     const token = generateToken(user);
     const refreshToken = generateRefreshToken(user);
     
+    console.log('✅ Tokens generados')
+    
     // Actualizar último login
     await user.update({ lastLogin: new Date() });
+    
+    console.log('✅ Login exitoso para:', user.email)
     
     res.json({
       message: 'Login exitoso',
@@ -133,10 +154,11 @@ const login = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error en login:', error);
+    console.error('❌ Error en login:', error)
+    console.error('❌ Stack trace:', error.stack)
     res.status(500).json({
       error: 'Error interno del servidor',
-      message: 'No se pudo procesar el login'
+      message: error.message || 'No se pudo procesar el login'
     });
   }
 };

@@ -78,7 +78,14 @@ app.use(cors({
       'https://192.168.1.5:5174',
       'https://192.168.1.5:5175',
       'https://192.168.1.5:3443',
-      'https://192.168.1.5:8443'
+      'https://192.168.1.5:8443',
+      // VirtualBox / Hyper-V
+      'http://192.168.56.1:5173',
+      'http://192.168.56.1:5174',
+      'http://192.168.56.1:5175',
+      'https://192.168.56.1:5173',
+      'https://192.168.56.1:5174',
+      'https://192.168.56.1:5175'
     ];
 
     // Si se definió FRONTEND_URL en env, añádelo (normalizado)
@@ -113,6 +120,12 @@ app.use('/api/assets', express.static(path.join(__dirname, 'assets')));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Middleware para loguear TODAS las peticiones
+app.use((req, res, next) => {
+  console.log(`📥 ${req.method} ${req.originalUrl} - Origin: ${req.headers.origin || 'no-origin'}`);
+  next();
+});
+
 // Importar rutas
 const authRoutes = require('./src/routes/auth');
 const eventRoutes = require('./src/routes/events');
@@ -128,6 +141,7 @@ const publicRoutes = require('./src/routes/public');
 const adminRegistroFeipobolRoutes = require('./src/routes/adminRegistroFeipobol');
 const adminPremiosRoutes = require('./src/routes/adminPremios');
 const configuracionRoutes = require('./src/routes/configuracion');
+const credencialVIPRoutes = require('./src/routes/credencialVIP');
 
 // Configurar rutas
 // Rutas públicas (sin autenticación)
@@ -149,6 +163,7 @@ app.use('/api/backup', backupRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/admin/registro-feipobol', adminRegistroFeipobolRoutes);
 app.use('/api/admin/premios', adminPremiosRoutes);
+app.use('/api/credenciales-vip', credencialVIPRoutes);
 
 // Ruta de prueba
 app.get('/', (req, res) => {
@@ -281,13 +296,35 @@ const startServer = async () => {
     console.log('⚠️  No se pudieron cargar certificados SSL:', error.message);
   }
   
+  // Función para obtener la IP local automáticamente
+  const getLocalIP = () => {
+    const os = require('os');
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+      for (const iface of interfaces[name]) {
+        // Ignorar direcciones internas y no IPv4
+        if (iface.family === 'IPv4' && !iface.internal) {
+          // Priorizar redes WiFi/Ethernet típicas (192.168.x.x, 10.x.x.x)
+          if (iface.address.startsWith('192.168.') || iface.address.startsWith('10.')) {
+            return iface.address;
+          }
+        }
+      }
+    }
+    return '0.0.0.0';
+  };
+  
+  const localIP = getLocalIP();
+  
   // Iniciar servidor HTTP (sin SSL)
   // En producción: nginx usa este puerto internamente
   // En desarrollo: permite testing sin problemas SSL
   http.createServer(app).listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor HTTP corriendo en puerto ${PORT}`);
     console.log(`🌐 Local: http://localhost:${PORT}`);
-    console.log(`🌐 Red: http://192.168.1.4:${PORT}`);
+    if (localIP !== '0.0.0.0') {
+      console.log(`🌐 Red: http://${localIP}:${PORT}`);
+    }
   });
   
   // Iniciar servidor HTTPS (con SSL) si hay certificados
@@ -295,8 +332,10 @@ const startServer = async () => {
     https.createServer(sslOptions, app).listen(HTTPS_PORT, '0.0.0.0', () => {
       console.log(`🔒 Servidor HTTPS corriendo en puerto ${HTTPS_PORT}`);
       console.log(`🌐 Local: https://localhost:${HTTPS_PORT}`);
-      console.log(`🌐 Red: https://192.168.1.4:${HTTPS_PORT}`);
-      console.log(`📱 Dispositivos móviles pueden acceder a: https://192.168.1.4:${HTTPS_PORT}`);
+      if (localIP !== '0.0.0.0') {
+        console.log(`🌐 Red: https://${localIP}:${HTTPS_PORT}`);
+        console.log(`📱 Dispositivos móviles pueden acceder a: https://${localIP}:${HTTPS_PORT}`);
+      }
       console.log(`⚠️  Los dispositivos verán advertencia de certificado - aceptar para continuar`);
     });
   } else {

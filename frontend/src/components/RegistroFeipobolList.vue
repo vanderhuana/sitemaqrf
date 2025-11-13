@@ -390,15 +390,11 @@ const cargarRegistros = async () => {
   
   try {
     console.log('🏆 Cargando registros FEIPOBOL...')
-    const response = await fetch('/api/admin/registro-feipobol', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    })
+    const { feipobolService } = await import('@/services/api')
+    const response = await feipobolService.getAllRegistrosFeipobol()
     
-    if (response.ok) {
-      const data = await response.json()
-      registros.value = data.registros || []
+    if (response.success) {
+      registros.value = Array.isArray(response.data) ? response.data : []
       
       // Generar URLs de QR para cada registro
       registros.value.forEach(registro => {
@@ -409,11 +405,13 @@ const cargarRegistros = async () => {
       
       console.log('✅ Registros FEIPOBOL cargados:', registros.value.length)
     } else {
-      throw new Error('Error al cargar registros')
+      registros.value = []
+      throw new Error(response.error || 'Error al cargar registros')
     }
   } catch (err) {
     console.error('❌ Error cargando registros FEIPOBOL:', err)
-    error.value = 'Error al cargar los registros de FEIPOBOL'
+    registros.value = []
+    error.value = err.message || 'Error al cargar los registros de FEIPOBOL'
   }
   
   cargando.value = false

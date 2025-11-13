@@ -3,8 +3,43 @@
     <div class="qr-result-modal" @click.stop>
       <!-- QR VÁLIDO -->
       <div v-if="result.success" class="result-valid">
-        <!-- Icono de éxito animado -->
-        <div class="success-icon">
+        
+        <!-- VALIDACIÓN DE CREDENCIAL VIP (VERDE) -->
+        <div v-if="result.tipo === 'credencial_vip'" class="vip-validation-success">
+          <!-- Icono circular verde con checkmark -->
+          <div class="vip-icon-circle vip-success-circle">
+            <div class="vip-checkmark">✓</div>
+          </div>
+          
+          <!-- Título principal -->
+          <h2 class="vip-title vip-success-title">✓ ENTRADA VÁLIDA</h2>
+          <p class="vip-subtitle vip-success-subtitle">Acceso permitido</p>
+          
+          <!-- Sección Razón (fondo rosa claro) -->
+          <div class="vip-info-box vip-reason-box">
+            <h3 class="vip-box-title">🔍 Razón:</h3>
+            <div class="vip-box-content vip-reason-content">
+              <span class="vip-warning-icon">⚠️</span>
+              <p class="vip-box-text">{{ result.message || 'Credencial VIP válida - Acceso autorizado' }}</p>
+            </div>
+          </div>
+          
+          <!-- Timestamp (fondo verde claro) -->
+          <div class="vip-info-box vip-timestamp-box">
+            <div class="vip-timestamp-row">
+              <span class="vip-timestamp-label">🕐 INTENTO REALIZADO:</span>
+              <span class="vip-timestamp-value">{{ formatDateTime(new Date()) }}</span>
+            </div>
+          </div>
+          
+          <!-- Botón continuar -->
+          <button class="vip-continue-button" @click="closeResult">
+            Continuar escaneando
+          </button>
+        </div>
+        
+        <!-- Icono de éxito animado (para otros tipos de validación) -->
+        <div v-else class="success-icon">
           <div class="checkmark-circle">
             <div class="checkmark"></div>
           </div>
@@ -1103,6 +1138,197 @@ export default {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* === ESTILOS ESPECÍFICOS PARA CREDENCIAL VIP (FORMATO VERDE) === */
+.vip-validation-success {
+  text-align: center;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.vip-icon-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin: 0 auto 25px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  animation: iconPulse 0.6s ease-out;
+}
+
+.vip-success-circle {
+  background: linear-gradient(135deg, #4caf50, #66bb6a);
+}
+
+.vip-checkmark {
+  font-size: 4em;
+  color: white;
+  font-weight: bold;
+  line-height: 1;
+}
+
+@keyframes iconPulse {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.vip-title {
+  font-size: 2.2em;
+  font-weight: 700;
+  margin: 15px 0 10px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.vip-success-title {
+  color: #2e7d32;
+}
+
+.vip-subtitle {
+  font-size: 1.3em;
+  font-weight: 500;
+  margin-bottom: 30px;
+}
+
+.vip-success-subtitle {
+  color: #4caf50;
+}
+
+.vip-info-box {
+  text-align: left;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 15px;
+  animation: boxSlideIn 0.4s ease-out forwards;
+}
+
+.vip-reason-box {
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  border-left: 5px solid #e57373;
+}
+
+.vip-details-box {
+  background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
+  border-left: 5px solid #ffd54f;
+}
+
+.vip-timestamp-box {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border-left: 5px solid #66bb6a;
+}
+
+@keyframes boxSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.vip-box-title {
+  font-size: 1.1em;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vip-box-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.vip-reason-content {
+  background: rgba(255, 255, 255, 0.7);
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.vip-details-content {
+  background: rgba(255, 255, 255, 0.7);
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.vip-warning-icon {
+  font-size: 1.5em;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.vip-box-text {
+  flex: 1;
+  font-size: 1.05em;
+  line-height: 1.5;
+  color: #333;
+  font-weight: 500;
+  margin: 0;
+}
+
+.vip-timestamp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.vip-timestamp-label {
+  font-weight: 700;
+  color: #2e7d32;
+  font-size: 0.95em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.vip-timestamp-value {
+  font-weight: 600;
+  color: #1b5e20;
+  font-size: 1em;
+}
+
+.vip-continue-button {
+  width: 100%;
+  background: linear-gradient(135deg, #1976d2, #42a5f5);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 16px 30px;
+  font-size: 1.15em;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 25px;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3);
+}
+
+.vip-continue-button:hover {
+  background: linear-gradient(135deg, #1565c0, #2196f3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(25, 118, 210, 0.4);
+}
+
+.vip-continue-button:active {
+  transform: translateY(0);
 }
 
 /* === RESPONSIVE === */

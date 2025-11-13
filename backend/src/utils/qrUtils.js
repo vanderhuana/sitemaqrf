@@ -1,5 +1,8 @@
 const qrcode = require('qrcode');
 const crypto = require('crypto');
+const sharp = require('sharp');
+const path = require('path');
+const fs = require('fs').promises;
 
 /**
  * Utilidades para generación y manejo de códigos QR
@@ -290,6 +293,87 @@ const generateQRSizes = async (data) => {
   return results;
 };
 
+/**
+ * Generar credencial VIP con diseño personalizado
+ * Superpone el QR y número sobre la imagen base paseVip.png
+ */
+const generateVIPCredentialImage = async (credencial, options = {}) => {
+  try {
+    const {
+      templateType = 'VIP', // 'VIP' o 'SUPER_VIP'
+      qrSize = 650, // QR más grande
+      qrX = null, // posición X del QR (null = centrado)
+      qrY = 1020,
+      showNumber = false, // No mostrar número
+      numberY = 1720, // Posición del número (no se usa si showNumber = false)
+      outputPath = null // si se proporciona, guarda el archivo
+    } = options;
+
+    // Ruta de la imagen base según el tipo
+    const templateFileName = templateType === 'SUPER_VIP' ? 'paseSuperVip.png' : 'paseVip.png';
+    // Buscar primero en assets/templates (para Docker), luego en frontend/public (para desarrollo local)
+    const templatePathDocker = path.join(__dirname, '../../assets/templates', templateFileName);
+    const templatePathLocal = path.join(__dirname, '../../..', 'frontend', 'public', templateFileName);
+    
+    let templatePath = templatePathDocker;
+    try {
+      await fs.access(templatePathDocker);
+    } catch (error) {
+      templatePath = templatePathLocal;
+    }
+
+    // Verificar que la imagen base existe
+    try {
+      await fs.access(templatePath);
+    } catch (error) {
+      throw new Error(`No se encontró la imagen base: ${templateFileName}`);
+    }
+
+    // Cargar la imagen base
+    const baseImage = await sharp(templatePath);
+    const metadata = await baseImage.metadata();
+    const { width: imageWidth, height: imageHeight } = metadata;
+
+    // Generar el código QR como buffer PNG
+    const qrBuffer = await qrcode.toBuffer(credencial.qrCode, {
+      errorCorrectionLevel: 'H',
+      margin: 1,
+      width: qrSize,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    });
+
+    // Calcular posición X centrada si no se especifica
+    const qrXPosition = qrX !== null ? qrX : Math.floor((imageWidth - qrSize) / 2);
+
+    // Componer la imagen final - solo QR, sin número
+    const compositeOperations = [
+      {
+        input: qrBuffer,
+        top: qrY,
+        left: qrXPosition
+      }
+    ];
+
+    let finalImage = baseImage.composite(compositeOperations);
+
+    // Si se proporciona ruta de salida, guardar el archivo
+    if (outputPath) {
+      await finalImage.toFile(outputPath);
+      return outputPath;
+    }
+
+    // Retornar como buffer
+    return await finalImage.png().toBuffer();
+
+  } catch (error) {
+    console.error('Error generando imagen de credencial VIP:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   generateUniqueQRCode,
   createQRData,
@@ -301,5 +385,6 @@ module.exports = {
   parseQRData,
   validateQRAgainstTicket,
   createValidationLog,
-  generateQRSizes
+  generateQRSizes,
+  generateVIPCredentialImage
 };

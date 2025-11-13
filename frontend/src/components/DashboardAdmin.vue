@@ -196,6 +196,14 @@
           >
             🏆 Premios FEIPOBOL
           </button>
+          
+          <button 
+            @click="cambiarSeccion('credenciales-vip')"
+            :class="{ active: seccionActiva === 'credenciales-vip' }"
+            class="nav-item sub-item"
+          >
+            🎖️ Credenciales VIP
+          </button>
         </div>
       </nav>
 
@@ -222,6 +230,7 @@
         <h1 v-else-if="seccionActiva === 'participantes'">LISTA DE PARTICIPANTES</h1>
         <h1 v-else-if="seccionActiva === 'registro-feipobol'">REGISTRO FEIPOBOL 2025</h1>
         <h1 v-else-if="seccionActiva === 'premios-feipobol'">🏆 GESTIÓN DE PREMIOS FEIPOBOL</h1>
+        <h1 v-else-if="seccionActiva === 'credenciales-vip'">🎖️ CREDENCIALES VIP</h1>
         <h1 v-else>PANEL ADMINISTRADOR</h1>
       </header>
       
@@ -753,6 +762,11 @@
         <PremiosFeipobol />
       </section>
 
+      <!-- SECCIÓN CREDENCIALES VIP -->
+      <section v-else-if="seccionActiva === 'credenciales-vip'" class="seccion-contenido">
+        <CredencialesVIP />
+      </section>
+
     </main>
 
     <!-- MODAL NUEVO USUARIO -->
@@ -1176,6 +1190,91 @@
       </div>
     </div>
 
+    <!-- MODAL CONFIRMACIÓN CREDENCIAL VIP -->
+    <div v-if="showVIPConfirmModal && pendingVIPValidation" class="modal-overlay" @click="cancelVIPValidation">
+      <div class="modal-content vip-confirm-modal" @click.stop>
+        <div class="modal-header vip-header">
+          <h3>🎖️ Confirmar Ingreso VIP</h3>
+          <button @click="cancelVIPValidation" class="modal-close">×</button>
+        </div>
+        
+        <div class="modal-body vip-body">
+          <!-- Información de la credencial -->
+          <div class="vip-info-card">
+            <div class="vip-badge" :class="pendingVIPValidation.credencial.tipo.toLowerCase().replace('_', '-')">
+              {{ pendingVIPValidation.credencial.tipo }}
+            </div>
+            
+            <div class="vip-details">
+              <div class="vip-row">
+                <span class="vip-label">📝 Número:</span>
+                <span class="vip-value">#{{ pendingVIPValidation.credencial.numeroCredencial }}</span>
+              </div>
+              
+              <div class="vip-row">
+                <span class="vip-label">📊 Estado actual:</span>
+                <span class="vip-value">
+                  <strong>{{ pendingVIPValidation.validaciones || 0 }}</strong> / 2 usos registrados
+                </span>
+              </div>
+              
+              <div class="vip-row status-row" :class="pendingVIPValidation.puedeValidar ? 'can-validate' : 'cannot-validate'">
+                <span class="vip-label">🚦 Estado:</span>
+                <span class="vip-value status-badge">
+                  {{ pendingVIPValidation.puedeValidar ? '✅ Disponible para ingreso' : '❌ No disponible' }}
+                </span>
+              </div>
+              
+              <div v-if="pendingVIPValidation.credencial.observaciones" class="vip-row">
+                <span class="vip-label">📌 Observaciones:</span>
+                <span class="vip-value obs">{{ pendingVIPValidation.credencial.observaciones }}</span>
+              </div>
+            </div>
+            
+            <!-- Mensaje de estado -->
+            <div class="vip-status-message" :class="pendingVIPValidation.puedeValidar ? 'success-msg' : 'error-msg'">
+              <span class="status-icon">{{ pendingVIPValidation.puedeValidar ? '✓' : '✕' }}</span>
+              <p>{{ pendingVIPValidation.message }}</p>
+            </div>
+            
+            <!-- Advertencia si no puede validar -->
+            <div v-if="!pendingVIPValidation.puedeValidar" class="vip-warning">
+              <strong>⚠️ Motivo:</strong>
+              <span v-if="pendingVIPValidation.razon === 'LIMITE_ALCANZADO'">
+                Esta credencial ya alcanzó su límite de 2 ingresos
+              </span>
+              <span v-else-if="pendingVIPValidation.razon === 'DESACTIVADA'">
+                Esta credencial ha sido desactivada
+              </span>
+              <span v-else>
+                No se puede validar esta credencial en este momento
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer vip-footer">
+          <button @click="cancelVIPValidation" class="btn-cancel">
+            ❌ Cancelar
+          </button>
+          <button 
+            v-if="pendingVIPValidation.puedeValidar"
+            @click="confirmVIPValidation" 
+            class="btn-confirm-vip"
+            :disabled="processingVIPValidation">
+            <span v-if="!processingVIPValidation">✅ Validar Ingreso</span>
+            <span v-else>⏳ Validando...</span>
+          </button>
+          <button 
+            v-else
+            @click="cancelVIPValidation" 
+            class="btn-understood">
+            Entendido
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- MODAL SELECCIÓN DE CANTIDAD DE PERSONAS -->
     <div v-if="showPersonCountModal" class="modal-overlay" @click="cancelPersonCount">
       <div class="modal-content person-count-modal" @click.stop>
@@ -1318,6 +1417,7 @@ import TrabajadoresList from './TrabajadoresList.vue'
 import ParticipantesList from './ParticipantesList.vue'
 import RegistroFeipobolList from './RegistroFeipobolList.vue'
 import PremiosFeipobol from '@/views/admin/PremiosFeipobol.vue'
+import CredencialesVIP from '@/views/admin/CredencialesVIP.vue'
 import GeneradorQREntradas from './GeneradorQREntradas.vue'
 import BackupManager from './BackupManager.vue'
 import ReportsManager from './ReportsManager.vue'
@@ -1416,6 +1516,11 @@ const showValidationResult = ref(false)
 const validationHistory = ref([])
 const videoStream = ref(null)
 const scanInterval = ref(null)
+
+// Variables para VIP confirmación
+const showVIPConfirmModal = ref(false)
+const pendingVIPValidation = ref(null)
+const processingVIPValidation = ref(false)
 
 // Variables para selección de cantidad de personas
 const showPersonCountModal = ref(false)
@@ -2675,7 +2780,8 @@ const esTokenAcceso = (qrCode) => {
 
 const esEntradaSimple = (qrCode) => {
   // Detecta tokens de entradas generadas (formato: ENTRY-timestamp-random)
-  return qrCode.startsWith('ENTRY-') || qrCode.startsWith('TK-')
+  // NOTA: TK- ya NO se considera entrada simple porque puede ser ticket O credencial VIP
+  return qrCode.startsWith('ENTRY-')
 }
 
 const validateQRCode = async (qrCode) => {
@@ -2742,9 +2848,52 @@ const validateQRCode = async (qrCode) => {
     } catch (ticketError) {
       console.log('ℹ️ No es un ticket de evento válido:', ticketError.message)
       esTicketValido = false
+      // NO mostrar error aquí, continuar intentando con otros tipos de QR
     }
     
-    // 4. Si llegamos aquí, es un QR externo/no reconocido
+    // 4. Intentar validar como Credencial VIP
+    let esCredencialVIP = false
+    try {
+      console.log('🎖️ Verificando si es credencial VIP...')
+      console.log('🎖️ QR Code a consultar:', qrCode)
+      console.log('🎖️ Timestamp llamada:', new Date().toISOString())
+      
+      const { credencialesVIPService } = await import('@/services/api')
+      
+      // PASO 1: CONSULTAR sin validar (solo obtener información)
+      const consultaVIP = await credencialesVIPService.consultar(qrCode)
+      
+      console.log('✅ Respuesta de consulta:', consultaVIP)
+      
+      if (consultaVIP && (consultaVIP.success || consultaVIP.puedeValidar !== undefined)) {
+        console.log('✅ Credencial VIP encontrada')
+        esCredencialVIP = true
+        loadingTicketInfo.value = false
+        
+        // PASO 2: Mostrar modal de confirmación con la información
+        pendingVIPValidation.value = {
+          qrCode: qrCode,
+          credencial: consultaVIP.credencial,
+          puedeValidar: consultaVIP.puedeValidar,
+          validaciones: consultaVIP.validaciones,
+          message: consultaVIP.message,
+          razon: consultaVIP.razon
+        }
+        showVIPConfirmModal.value = true
+        
+        return
+      }
+    } catch (vipError) {
+      console.log('ℹ️ Error al consultar VIP (no es VIP o error de red):', vipError.message)
+      // Si hay error, no es VIP, continuar con QR no reconocido
+    }
+    
+    // Si se confirmó que es VIP pero no se mostró el modal, hay un problema
+    if (esCredencialVIP) {
+      return
+    }
+    
+    // 5. Si llegamos aquí, es un QR externo/no reconocido
     console.log('❌ QR externo/no reconocido:', qrCode)
     
     // Resetear loading
@@ -3067,10 +3216,83 @@ const cancelPersonCount = () => {
 // Función para manejar el cierre manual del modal de resultado
 const handleValidationResultClose = () => {
   showValidationResult.value = false
+  processingQR.value = false // Resetear flag de procesamiento
   
   // Reactivar escáner inmediatamente si está activo
-  if (scannerActive.value && !scanInterval.value && !processingQR.value) {
+  if (scannerActive.value && !scanInterval.value) {
     console.log('🔄 Reactivando escáner tras cerrar modal...')
+    startScanning()
+  }
+}
+
+// Función para confirmar validación VIP
+const confirmVIPValidation = async () => {
+  if (!pendingVIPValidation.value || processingVIPValidation.value) return
+  
+  processingVIPValidation.value = true
+  
+  try {
+    console.log('✅ Confirmando validación VIP para:', pendingVIPValidation.value.qrCode)
+    
+    const { credencialesVIPService } = await import('@/services/api')
+    const resultadoVIP = await credencialesVIPService.validar(pendingVIPValidation.value.qrCode)
+    
+    console.log('✅ Resultado de validación confirmada:', resultadoVIP)
+    
+    // Cerrar modal de confirmación
+    showVIPConfirmModal.value = false
+    
+    // Mostrar resultado
+    const credencial = resultadoVIP.credencial
+    const esAdvertencia = credencial.validaciones > 2  // Cambio: > 2 en lugar de >= 2
+    
+    lastValidationResult.value = {
+      success: !esAdvertencia,
+      message: esAdvertencia 
+        ? `⚠️ LÍMITE ALCANZADO - Esta credencial ${credencial.tipo} ya usó sus 2 ingresos permitidos`
+        : `✅ Acceso permitido - Credencial ${credencial.tipo} - Ingreso ${credencial.validaciones} de 2`,
+      credencial: {
+        numero: credencial.numeroCredencial,
+        tipo: credencial.tipo,
+        validaciones: credencial.validaciones,
+        token: credencial.token
+      },
+      result: esAdvertencia ? 'warning' : 'success',
+      tipo: 'credencial_vip'
+    }
+    showValidationResult.value = true
+    
+    // Reproducir sonido
+    playValidationSound(!esAdvertencia)
+    
+  } catch (error) {
+    console.error('❌ Error validando credencial VIP:', error)
+    
+    showVIPConfirmModal.value = false
+    lastValidationResult.value = {
+      success: false,
+      message: `❌ Error: ${error.message || 'No se pudo validar la credencial'}`,
+      result: 'error',
+      tipo: 'credencial_vip'
+    }
+    showValidationResult.value = true
+    playValidationSound(false)
+  } finally {
+    processingVIPValidation.value = false
+    pendingVIPValidation.value = null
+    processingQR.value = false
+  }
+}
+
+// Función para cancelar validación VIP
+const cancelVIPValidation = () => {
+  showVIPConfirmModal.value = false
+  pendingVIPValidation.value = null
+  processingQR.value = false
+  
+  // Reactivar escáner si estaba activo
+  if (wasScanningBeforePause.value && scannerActive.value && !scanInterval.value) {
+    console.log('🔄 Reactivando escáner tras cancelar...')
     startScanning()
   }
 }
@@ -4087,6 +4309,228 @@ const usarDatosSimulados = () => {
   border: 2px solid #eee;
   border-radius: 8px;
   font-size: 1rem;
+}
+
+/* MODAL DE CONFIRMACIÓN VIP */
+.vip-confirm-modal {
+  max-width: 520px;
+  background: linear-gradient(145deg, #ffffff, #f8f9fa);
+  border: 3px solid #FFD700;
+  box-shadow: 0 8px 32px rgba(255, 215, 0, 0.3);
+}
+
+.vip-header {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #333;
+  margin: -20px -20px 20px;
+  padding: 20px;
+  border-radius: 12px 12px 0 0;
+}
+
+.vip-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.vip-body {
+  padding: 0;
+}
+
+.vip-info-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  border: 2px solid #f0f0f0;
+}
+
+.vip-badge {
+  display: inline-block;
+  padding: 8px 20px;
+  border-radius: 25px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.vip-badge.vip {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #333;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+.vip-badge.super-vip {
+  background: linear-gradient(135deg, #FF6B6B, #FFD700);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+}
+
+.vip-details {
+  margin-bottom: 20px;
+}
+
+.vip-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.vip-row:last-child {
+  border-bottom: none;
+}
+
+.vip-label {
+  font-weight: 600;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.vip-value {
+  font-weight: 500;
+  color: #333;
+  text-align: right;
+}
+
+.vip-value.obs {
+  font-style: italic;
+  color: #777;
+  max-width: 60%;
+}
+
+.status-row {
+  margin-top: 10px;
+  padding: 15px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+}
+
+.status-row.can-validate {
+  background: #E8F5E9;
+  border-color: #4CAF50;
+}
+
+.status-row.cannot-validate {
+  background: #FFEBEE;
+  border-color: #F44336;
+}
+
+.status-badge {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.vip-status-message {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vip-status-message.success-msg {
+  background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+  border: 2px solid #4CAF50;
+}
+
+.vip-status-message.error-msg {
+  background: linear-gradient(135deg, #FFEBEE, #FFCDD2);
+  border: 2px solid #F44336;
+}
+
+.status-icon {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.vip-status-message p {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #333;
+}
+
+.vip-warning {
+  margin-top: 15px;
+  padding: 15px;
+  background: #FFF3CD;
+  border: 2px solid #FFC107;
+  border-radius: 8px;
+  color: #856404;
+  font-weight: 500;
+}
+
+.vip-warning strong {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.vip-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid #f0f0f0;
+}
+
+.btn-cancel {
+  padding: 12px 24px;
+  background: #fff;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-cancel:hover {
+  background: #f5f5f5;
+  border-color: #999;
+}
+
+.btn-confirm-vip {
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #4CAF50, #66BB6A);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.btn-confirm-vip:hover:not(:disabled) {
+  background: linear-gradient(135deg, #66BB6A, #4CAF50);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+}
+
+.btn-confirm-vip:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-understood {
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #2196F3, #42A5F5);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-understood:hover {
+  background: linear-gradient(135deg, #42A5F5, #2196F3);
 }
 
 /* MODAL DE SELECCIÓN DE PERSONAS */

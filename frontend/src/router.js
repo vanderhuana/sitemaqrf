@@ -10,6 +10,7 @@ import DashboardAdmin from './components/DashboardAdmin.vue'
 import DashboardVendedor from './components/DashboardVendedor.vue'
 import DashboardControl from './components/DashboardControl.vue'
 import GeneradorQREntradas from './components/GeneradorQREntradas.vue'
+import CredencialesVIP from './views/admin/CredencialesVIP.vue'
 
 const routes = [
   { path: '/', component: HomeView },
@@ -22,6 +23,14 @@ const routes = [
   { path: '/registro-trabajador', component: RegistroTrabajador },
   { path: '/registro-participante', component: RegistroParticipante },
   { path: '/premios-feipobol', component: RegistroFeipobol },
+  { 
+    path: '/admin/credenciales-vip', 
+    component: CredencialesVIP, 
+    meta: { 
+      requiresAuth: true, 
+      requiresRole: 'admin' 
+    } 
+  },
   { 
     path: '/generar-entradas', 
     component: GeneradorQREntradas, 

@@ -16,8 +16,8 @@ RUN npm ci --only=production
 # Copiar el resto del código
 COPY . .
 
-# Crear directorio para uploads si no existe
-RUN mkdir -p uploads
+# Crear directorios necesarios
+RUN mkdir -p uploads assets/templates
 
 # Exponer puertos HTTP y HTTPS
 EXPOSE 3000

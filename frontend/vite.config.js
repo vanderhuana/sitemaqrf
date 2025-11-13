@@ -83,11 +83,22 @@ export default defineConfig({
       httpsOptions = false
     }
 
-    // Detectar IP local automáticamente
-    const localIP = getLocalIP()
-    const backendTarget = `https://${localIP}:3443`
+    // Detectar si necesitamos usar IP de red o localhost
+    // Por defecto usa localhost (funciona siempre cuando frontend y backend están en la misma máquina)
+    // Si defines VITE_BACKEND_HOST, usará esa IP específica
+    const useNetworkIP = process.env.VITE_BACKEND_HOST || 'localhost'
+    const backendPort = process.env.VITE_BACKEND_PORT || '3443'
+    const backendTarget = `https://${useNetworkIP}:${backendPort}`
     
     console.log(`🔗 Configurando proxy hacia: ${backendTarget}`)
+    if (useNetworkIP === 'localhost') {
+      const detectedIP = getLocalIP()
+      console.log(`💡 Usando localhost (recomendado para desarrollo local)`)
+      console.log(`💡 IP de red detectada: ${detectedIP}`)
+      console.log(`💡 Para acceso desde otros dispositivos, define: VITE_BACKEND_HOST=${detectedIP}`)
+    } else {
+      console.log(`🌐 Usando IP de red: ${useNetworkIP}`)
+    }
     
     return {
       host: '0.0.0.0', // Escuchar en todas las interfaces de red
