@@ -25,6 +25,37 @@ module.exports = (sequelize) => {
         }
       }
     },
+    fechaNacimiento: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,  // Permitir NULL para registros antiguos
+      validate: {
+        isDate: {
+          msg: 'Debe ser una fecha válida'
+        },
+        isMayorDeEdad(value) {
+          if (!value) return; // Si es NULL, no validar
+          const hoy = new Date();
+          const fechaNac = new Date(value);
+          const edad = hoy.getFullYear() - fechaNac.getFullYear();
+          const m = hoy.getMonth() - fechaNac.getMonth();
+          const edadReal = (m < 0 || (m === 0 && hoy.getDate() < fechaNac.getDate())) ? edad - 1 : edad;
+          
+          if (edadReal < 18) {
+            throw new Error('Debe ser mayor de 18 años');
+          }
+        }
+      }
+    },
+    carrera: {
+      type: DataTypes.STRING,
+      allowNull: true,  // Permitir NULL para registros antiguos
+      validate: {
+        len: {
+          args: [2, 100],
+          msg: 'La carrera debe tener entre 2 y 100 caracteres'
+        }
+      }
+    },
     ci: {
       type: DataTypes.STRING,
       allowNull: true,

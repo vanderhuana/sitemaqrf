@@ -22,7 +22,7 @@ const routes = [
   { path: '/staff', component: StaffView },
   { path: '/registro-trabajador', component: RegistroTrabajador },
   { path: '/registro-participante', component: RegistroParticipante },
-  { path: '/premios-feipobol', component: RegistroFeipobol },
+  { path: '/uatf-derecho', component: RegistroFeipobol },
   { 
     path: '/admin/credenciales-vip', 
     component: CredencialesVIP, 

@@ -3,10 +3,9 @@
     <!-- Header FEIPOBOL -->
     <header class="header-feipobol">
       <div class="logo-container">
-        <img src="@/assets/logo.png" alt="FEIPOBOL Logo" class="logo-img" />
         <div class="header-text">
-          <h1>FEIPOBOL</h1>
-          <p>EN EL BICENTENARIO DE BOLIVIA 🇧🇴</p>
+          <h1>UATF DERECHO</h1>
+          <p>UATF DERECHO</p>
         </div>
       </div>
     </header>
@@ -15,9 +14,9 @@
       <!-- Formulario izquierda -->
       <div class="formulario-card">
         <div class="titulo-con-regalos">
-          <span class="emoji-regalo">🎁</span>
-          <h2 class="titulo-formulario">FORMULARIO DE REGISTRO<br />SORTEOS!!!</h2>
-          <span class="emoji-regalo">🎁</span>
+          
+          <h2 class="titulo-formulario">FORMULARIO DE REGISTRO<br />DERECHO - UATF</h2>
+        
         </div>
         <div class="linea-decorativa"></div>
 
@@ -79,7 +78,55 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label>Número de CI: <span class="requerido">*</span></label>
+              <label>Fecha de Nacimiento: <span class="requerido">*</span></label>
+              <div class="input-con-icono">
+                <input 
+                  v-model="formData.fechaNacimiento" 
+                  type="date" 
+                  required
+                  class="form-control"
+                  :class="{ 'input-error': errores.fechaNacimiento, 'input-valido': formData.fechaNacimiento && !errores.fechaNacimiento }"
+                  @blur="validarFechaNacimiento"
+                  :max="fechaMaxima"
+                />
+                <span v-if="formData.fechaNacimiento && !errores.fechaNacimiento" class="icono-validacion valido">✓</span>
+                <span v-if="errores.fechaNacimiento" class="icono-validacion error">✗</span>
+              </div>
+              <span v-if="errores.fechaNacimiento" class="mensaje-error">{{ errores.fechaNacimiento }}</span>
+              <span v-else class="mensaje-ayuda">Debe ser mayor de 18 años</span>
+            </div>
+
+            <div class="form-group">
+              <label>Carrera: <span class="requerido">*</span></label>
+              <div class="input-con-icono">
+                <select 
+                  v-model="formData.carrera" 
+                  required
+                  class="form-control"
+                  :class="{ 'input-error': errores.carrera, 'input-valido': formData.carrera && !errores.carrera }"
+                >
+                  <option value="">Selecciona tu carrera...</option>
+                  <option value="Derecho">Derecho</option>
+                  <option value="Medicina">Medicina</option>
+                  <option value="Ingeniería Civil">Ingeniería Civil</option>
+                  <option value="Ingeniería de Sistemas">Ingeniería de Sistemas</option>
+                  <option value="Contaduría Pública">Contaduría Pública</option>
+                  <option value="Administración de Empresas">Administración de Empresas</option>
+                  <option value="Enfermería">Enfermería</option>
+                  <option value="Arquitectura">Arquitectura</option>
+                  <option value="Economía">Economía</option>
+                  <option value="Psicología">Psicología</option>
+                  <option value="Otra">Otra</option>
+                </select>
+                <span v-if="formData.carrera" class="icono-validacion valido">✓</span>
+              </div>
+              <span v-if="errores.carrera" class="mensaje-error">{{ errores.carrera }}</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Número de CI:</label>
               <div class="input-con-icono">
                 <input 
                   ref="ciInput"
@@ -160,12 +207,13 @@
           </div>
 
           <div class="form-group">
-            <label>Correo Electrónico:</label>
+            <label>Correo Electrónico: <span class="requerido">*</span></label>
             <div class="input-con-icono">
               <input 
                 v-model="formData.correo" 
                 type="email" 
-                placeholder="tucorreo@email.com (opcional)"
+                required
+                placeholder="tucorreo@email.com"
                 inputmode="email"
                 class="form-control"
                 :class="{ 
@@ -178,7 +226,8 @@
               <span v-if="formData.correo.trim() && !errores.correo" class="icono-validacion valido">✓</span>
               <span v-if="errores.correo" class="icono-validacion error">✗</span>
             </div>
-            <p v-if="errores.correo" class="mensaje-error">{{ errores.correo }}</p>
+            <span v-if="errores.correo" class="mensaje-error">{{ errores.correo }}</span>
+            <span v-else class="mensaje-ayuda">Email válido requerido</span>
           </div>
 
           <div class="form-actions">
@@ -187,7 +236,7 @@
               :disabled="enviando" 
               class="btn-enviar"
             >
-              <span v-if="!enviando">ENVIAR DATOS 😃</span>
+              <span v-if="!enviando">ENVIAR DATOS</span>
               <span v-else class="loading">
                 <span class="spinner"></span>
                 Registrando...
@@ -197,10 +246,10 @@
 
           <div class="info-adicional">
             <p>• Todos los campos con <span class="requerido">*</span> son obligatorios</p>
-            <p>• El correo electrónico es opcional</p>
+
             <p>• CI: 7-8 dígitos (puede incluir complemento Ej: 1234567-1A)</p>
             <p>• Celular: 8 dígitos, debe iniciar con 6 o 7 (Ej: 71234567)</p>
-            <p class="info-premio">🎁 <strong>Importante:</strong> Para reclamar tu premio, deberás presentar tu documento de identidad (CI) o registrar el mismo número de celular usado en este formulario</p>
+           
           </div>
         </form>
 
@@ -213,49 +262,17 @@
           <button @click="cerrarMensaje" class="btn-cerrar-mensaje">×</button>
         </div>
       </div>
-
-      <!-- Sección derecha con logo -->
-      <div class="seccion-logo">
-        <div class="logo-contenedor-derecha">
-          <img src="@/assets/logo.png" alt="Cerro Rico de Potosí" class="logo-principal" />
-        </div>
-      </div>
     </div>
 
-    <!-- Modal de éxito -->
+    <!-- Modal de agradecimiento -->
     <div v-if="mostrarModalExito" class="modal-overlay" @click.self="cerrarModal">
-      <div class="modal-exito">
-        <div class="modal-header">
-          <h3>🎉 ¡Registro Exitoso!</h3>
-          <button @click="cerrarModal" class="btn-cerrar-modal">×</button>
-        </div>
+      <div class="modal-agradecimiento">
+        <button @click="cerrarModal" class="btn-cerrar-simple">×</button>
         
-        <div class="modal-body">
-          <div class="info-registro">
-            <h4>📋 Información del Registro</h4>
-            <div class="datos-registro">
-              <p><strong>Nombre:</strong> {{ registroExitoso?.nombre }} {{ registroExitoso?.apellido }}</p>
-              <p><strong>N° de Sorteo:</strong> <span class="numero-sorteo">#{{ registroExitoso?.numeroSorteo }}</span></p>
-              <p><strong>Fecha:</strong> {{ formatearFecha(registroExitoso?.fechaRegistro) }}</p>
-            </div>
-          </div>
-
-          <div v-if="registroExitoso?.qrCode" class="qr-section">
-            <h4>📱 Tu Código QR</h4>
-            <div class="qr-container">
-              <img :src="'data:image/png;base64,' + registroExitoso.qrCode" alt="Código QR" class="qr-image"/>
-              <p class="qr-info">Guarda este código QR para futuros eventos</p>
-            </div>
-            
-            <div class="qr-actions">
-              <button @click="descargarQR" class="btn-descargar">
-                💾 Descargar QR
-              </button>
-              <button @click="imprimirBoleto" class="btn-imprimir">
-                🖨️ Imprimir Boleto
-              </button>
-            </div>
-          </div>
+        <div class="contenido-agradecimiento">
+          <div class="icono-agradecimiento">✅</div>
+          <h1 class="titulo-agradecimiento">¡Gracias por tu Registro!</h1>
+          <p class="mensaje-agradecimiento-simple">Tu participación ha sido registrada exitosamente</p>
         </div>
       </div>
     </div>
@@ -659,6 +676,8 @@ const mensaje = reactive({
 const formData = reactive({
   nombre: '',
   apellido: '',
+  fechaNacimiento: '',
+  carrera: '',
   ci: '',
   zona: '',
   telefono: '',
@@ -669,9 +688,18 @@ const formData = reactive({
 const errores = reactive({
   nombre: '',
   apellido: '',
+  fechaNacimiento: '',
+  carrera: '',
   ci: '',
   telefono: '',
   correo: ''
+})
+
+// Fecha máxima para validación (18 años atrás)
+const fechaMaxima = computed(() => {
+  const hoy = new Date()
+  hoy.setFullYear(hoy.getFullYear() - 18)
+  return hoy.toISOString().split('T')[0]
 })
 
 // Métodos de validación
@@ -777,14 +805,37 @@ const aplicarMascaraTelefono = () => {
   validarCelular()
 }
 
+// Validación de fecha de nacimiento
+const validarFechaNacimiento = () => {
+  if (!formData.fechaNacimiento) {
+    errores.fechaNacimiento = 'La fecha de nacimiento es obligatoria'
+    return false
+  }
+  
+  const fechaNac = new Date(formData.fechaNacimiento)
+  const hoy = new Date()
+  const edad = hoy.getFullYear() - fechaNac.getFullYear()
+  const m = hoy.getMonth() - fechaNac.getMonth()
+  
+  const edadReal = (m < 0 || (m === 0 && hoy.getDate() < fechaNac.getDate())) ? edad - 1 : edad
+  
+  if (edadReal < 18) {
+    errores.fechaNacimiento = 'Debes ser mayor de 18 años'
+    return false
+  }
+  
+  errores.fechaNacimiento = ''
+  return true
+}
+
 // Validación de correo electrónico
 const validarCorreo = () => {
   const correo = formData.correo.trim()
   
-  // Si está vacío, no hay error (es opcional)
+  // Validar que no esté vacío (es obligatorio)
   if (!correo || correo.length === 0) {
-    errores.correo = ''
-    return true
+    errores.correo = 'El correo electrónico es obligatorio'
+    return false
   }
   
   // Validar formato de email
@@ -838,6 +889,8 @@ const enviarFormulario = async () => {
     // Limpiar errores previos
     errores.nombre = ''
     errores.apellido = ''
+    errores.fechaNacimiento = ''
+    errores.carrera = ''
     errores.ci = ''
     errores.telefono = ''
     errores.correo = ''
@@ -845,11 +898,14 @@ const enviarFormulario = async () => {
     // Validaciones usando las funciones
     const nombreValido = validarNombre()
     const apellidoValido = validarApellido()
+    const fechaNacValida = validarFechaNacimiento()
+    const carreraValida = !!formData.carrera
+    if (!carreraValida) errores.carrera = 'La carrera es obligatoria'
     const ciValido = formData.ci ? validarCI() : true
     const telefonoValido = validarCelular()
     const correoValido = validarCorreo()
     
-    if (!nombreValido || !apellidoValido || !ciValido || !telefonoValido || !correoValido) {
+    if (!nombreValido || !apellidoValido || !fechaNacValida || !carreraValida || !ciValido || !telefonoValido || !correoValido) {
       scrollToError()
       throw new Error('Por favor corrige los errores en el formulario')
     }
@@ -866,10 +922,12 @@ const enviarFormulario = async () => {
     const response = await feipobolService.createRegistroFeipobol({
       nombre: formData.nombre.trim(),
       apellido: formData.apellido.trim(),
+      fechaNacimiento: formData.fechaNacimiento,
+      carrera: formData.carrera,
       ci: formData.ci.trim() || null,
       zona: formData.zona || null,
       telefono: formData.telefono.trim(),
-      correo: formData.correo.trim() || null
+      correo: formData.correo.trim()
     })
 
     console.log('✅ Respuesta del servicio:', response)
@@ -884,17 +942,8 @@ const enviarFormulario = async () => {
     if (data.success) {
       registroExitoso.value = data.data
       
-      // Verificar si ganó un premio
-      if (data.data.esGanador && data.data.premio) {
-        premioInfo.value = data.data.premio
-      } else {
-        premioInfo.value = null
-        // Generar mensaje motivacional aleatorio
-        mensajeMotivacional.value = obtenerMensajeAleatorio()
-      }
-      
-      // SIEMPRE mostrar el modal nuevo (premio o no premio)
-      mostrarModalPremio.value = true
+      // Mostrar solo modal simple de agradecimiento
+      mostrarModalExito.value = true
       
       // Limpiar formulario COMPLETO
       Object.keys(formData).forEach(key => {
@@ -1318,7 +1367,7 @@ const descargarBoletoParticipante = async () => {
     // Mensaje motivacional aleatorio
     ctx.font = 'bold 60px Arial'
     ctx.fillStyle = '#16A085'
-    ctx.fillText('¡SIGUE PARTICIPANDO!', canvas.width / 2, yPos)
+    ctx.fillText('', canvas.width / 2, yPos)
     yPos += 90
 
     // Fecha
@@ -1524,7 +1573,7 @@ onMounted(() => {
   width: 100vw;
   margin: 0;
   padding: 0;
-  background-image: url('@/assets/fondo01.png');
+  background-image: url('@/assets/derechofondo.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -1535,7 +1584,7 @@ onMounted(() => {
 
 /* HEADER */
 .header-feipobol {
-  background: linear-gradient(135deg, #6B9080, #8FA89B);
+  background: linear-gradient(135deg, #2E4A8B, #3B5BA5);
   padding: 15px 40px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
@@ -1640,14 +1689,14 @@ onMounted(() => {
 
 .linea-decorativa {
   height: 3px;
-  background: linear-gradient(90deg, transparent, #5FD0AD, transparent);
+  background: linear-gradient(90deg, transparent, #E74C3C, transparent);
   margin-bottom: 25px;
 }
 
 .titulo-formulario {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #5FD0AD;
+  color: #2E4A8B;
   text-align: center;
   line-height: 1.2;
   margin: 0;
@@ -1680,7 +1729,7 @@ onMounted(() => {
 
 .form-group label {
   font-weight: 600;
-  color: #FF6B35;
+  color: #2E4A8B;
   font-size: 13px;
 }
 
@@ -1691,7 +1740,7 @@ onMounted(() => {
 
 .form-control {
   padding: 12px 14px;
-  border: 2px solid #FFD6C4;
+  border: 2px solid #E8B4B8;
   border-radius: 10px;
   font-size: 15px;
   transition: all 0.3s ease;
@@ -1700,9 +1749,9 @@ onMounted(() => {
 
 .form-control:focus {
   outline: none;
-  border-color: #FF6B35;
+  border-color: #3B5BA5;
   background: white;
-  box-shadow: 0 0 0 3px rgba(255,107,53,0.1);
+  box-shadow: 0 0 0 3px rgba(46,74,139,0.15);
 }
 
 /* Estilos de validación */
@@ -1787,7 +1836,7 @@ onMounted(() => {
   left: 0;
   right: 0;
   background: white;
-  border: 2px solid #6B9080;
+  border: 2px solid #3B5BA5;
   border-radius: 8px;
   max-height: 300px;
   overflow-y: auto;
@@ -1808,8 +1857,8 @@ onMounted(() => {
 }
 
 .zona-item:hover {
-  background: linear-gradient(90deg, rgba(107,144,128,0.1), rgba(107,144,128,0.05));
-  color: #6B9080;
+  background: linear-gradient(90deg, rgba(46,74,139,0.1), rgba(46,74,139,0.05));
+  color: #2E4A8B;
   font-weight: 600;
 }
 
@@ -1828,7 +1877,7 @@ onMounted(() => {
 
 .btn-enviar {
   width: 100%;
-  background: linear-gradient(135deg, #5FD0AD, #4DB89A);
+  background: linear-gradient(135deg, #2E4A8B, #3B5BA5);
   color: white;
   border: none;
   padding: 14px;
@@ -1839,13 +1888,13 @@ onMounted(() => {
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 1px;
-  box-shadow: 0 6px 20px rgba(95,208,173,0.4);
+  box-shadow: 0 6px 20px rgba(46,74,139,0.4);
 }
 
 .btn-enviar:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(95,208,173,0.5);
-  background: linear-gradient(135deg, #4DB89A, #3DA585);
+  box-shadow: 0 8px 25px rgba(46,74,139,0.5);
+  background: linear-gradient(135deg, #1E3A6B, #2E4A8B);
 }
 
 .btn-enviar:disabled {
@@ -1880,7 +1929,7 @@ onMounted(() => {
   padding: 20px;
   background: #f8f9fa;
   border-radius: 10px;
-  border-left: 4px solid #6B9080;
+  border-left: 4px solid #2E4A8B;
 }
 
 .info-adicional p {
@@ -1983,6 +2032,84 @@ onMounted(() => {
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-10px); }
+}
+
+/* MODAL DE AGRADECIMIENTO */
+.modal-agradecimiento {
+  background: linear-gradient(135deg, #2E4A8B 0%, #3B5BA5 100%);
+  border-radius: 25px;
+  padding: 50px 40px;
+  max-width: 500px;
+  width: 90%;
+  position: relative;
+  box-shadow: 0 25px 70px rgba(0,0,0,0.4);
+  animation: bounceIn 0.6s ease-out;
+  text-align: center;
+}
+
+.contenido-agradecimiento {
+  color: white;
+}
+
+.icono-agradecimiento {
+  font-size: 80px;
+  margin-bottom: 20px;
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.titulo-agradecimiento {
+  font-size: 2.5rem;
+  font-weight: 900;
+  margin-bottom: 15px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.nombre-registrado {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+
+.mensaje-agradecimiento {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+  opacity: 0.95;
+}
+
+.mensaje-agradecimiento-simple {
+  font-size: 1.3rem;
+  margin-top: 20px;
+  opacity: 0.95;
+  line-height: 1.6;
+}
+
+.info-numero {
+  background: rgba(255,255,255,0.2);
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 25px;
+}
+
+.label-numero {
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 10px;
+  opacity: 0.9;
+}
+
+.numero-grande {
+  font-size: 3rem;
+  font-weight: 900;
+  color: #FFD700;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.firma-uatf {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  margin-top: 20px;
 }
 
 /* MODAL */

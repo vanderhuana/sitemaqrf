@@ -154,12 +154,37 @@ const syncModels = async (force = false) => {
   try {
     if (force) {
       console.log('⚠️  ADVERTENCIA: Recreando tablas (se perderán datos)...');
+      await sequelize.sync({ force: true });
     } else {
-      console.log('🔄 Sincronizando modelos (preservando datos)...');
+      console.log('🔄 Sincronizando modelos (sin alterar tablas existentes)...');
+      // Usar sync normal sin alter para evitar conflictos SQL
+      await sequelize.sync({ force: false });
+      
+      // Agregar columnas manualmente si no existen
+      const queryInterface = sequelize.getQueryInterface();
+      const tableDescription = await queryInterface.describeTable('registros_feipobol');
+      
+      // Agregar fechaNacimiento si no existe
+      if (!tableDescription.fechaNacimiento) {
+        console.log('➕ Agregando columna fechaNacimiento...');
+        await queryInterface.addColumn('registros_feipobol', 'fechaNacimiento', {
+          type: require('sequelize').DataTypes.DATEONLY,
+          allowNull: true
+        });
+      }
+      
+      // Agregar carrera si no existe
+      if (!tableDescription.carrera) {
+        console.log('➕ Agregando columna carrera...');
+        await queryInterface.addColumn('registros_feipobol', 'carrera', {
+          type: require('sequelize').DataTypes.STRING,
+          allowNull: true
+        });
+      }
+      
+      console.log('✅ Columnas verificadas/agregadas correctamente');
     }
     
-    // Solo forzar si se pasa explícitamente force=true
-    await sequelize.sync({ force: force });
     console.log('🎉 Todos los modelos sincronizados correctamente');
     
     return true;

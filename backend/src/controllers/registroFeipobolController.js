@@ -359,6 +359,8 @@ const createRegistroFeipobol = async (req, res) => {
     const {
       nombre,
       apellido,
+      fechaNacimiento,
+      carrera,
       ci,
       telefono,
       correo,
@@ -366,23 +368,47 @@ const createRegistroFeipobol = async (req, res) => {
     } = req.body;
 
     // Validar campos requeridos
-    if (!nombre || !apellido || !ci || !telefono) {
+    if (!nombre || !apellido || !fechaNacimiento || !carrera || !telefono || !correo) {
       return res.status(400).json({
-        error: 'Campos requeridos: nombre, apellido, ci, telefono'
+        error: 'Campos requeridos: nombre, apellido, fechaNacimiento, carrera, telefono, correo'
+      });
+    }
+
+    // Validar que sea mayor de 18 años
+    const hoy = new Date();
+    const fechaNac = new Date(fechaNacimiento);
+    const edad = hoy.getFullYear() - fechaNac.getFullYear();
+    const m = hoy.getMonth() - fechaNac.getMonth();
+    const edadReal = (m < 0 || (m === 0 && hoy.getDate() < fechaNac.getDate())) ? edad - 1 : edad;
+    
+    if (edadReal < 18) {
+      return res.status(400).json({
+        error: 'Debe ser mayor de 18 años para registrarse'
+      });
+    }
+
+    // Validar formato de correo
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(correo)) {
+      return res.status(400).json({
+        error: 'Debe proporcionar un correo electrónico válido'
       });
     }
 
     // Convertir a mayúsculas los campos de texto principales
     const nombreMayusculas = nombre.toUpperCase().trim();
     const apellidoMayusculas = apellido.toUpperCase().trim();
+    const carreraMayusculas = carrera.toUpperCase().trim();
     const zonaMayusculas = zona ? zona.toUpperCase().trim() : null;
 
-    // Verificar si el CI ya existe
-    const registroExistente = await RegistroFeipobol.findOne({ where: { ci } });
-    if (registroExistente) {
-      return res.status(400).json({
-        error: 'Ya existe un registro con este CI'
-      });
+    // Verificar si el CI ya existe (solo si se proporcionó CI)
+    if (ci && ci.trim()) {
+      const registroExistente = await RegistroFeipobol.findOne({ where: { ci: ci.trim() } });
+      if (registroExistente) {
+        return res.status(400).json({
+          error: 'Ya existe un registro con este CI'
+        });
+      }
     }
 
     // Generar QR único basado en el token (se genera automáticamente)
@@ -424,9 +450,11 @@ const createRegistroFeipobol = async (req, res) => {
     const registro = await RegistroFeipobol.create({
       nombre: nombreMayusculas,
       apellido: apellidoMayusculas,
-      ci,
+      fechaNacimiento,
+      carrera: carreraMayusculas,
+      ci: ci ? ci.trim() : null,
       telefono,
-      correo: correo ? correo.toLowerCase().trim() : null,
+      correo: correo.toLowerCase().trim(),
       zona: zonaMayusculas,
       qrCode,
       numeroSorteo

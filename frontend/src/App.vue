@@ -177,7 +177,7 @@ const usuarioActual = ref(null)
 
 // Verificar si la ruta actual es pública
 const esRutaPublica = computed(() => {
-  const rutasPublicas = ['/registro-trabajador', '/registro-participante', '/premios-feipobol']
+  const rutasPublicas = ['/registro-trabajador', '/registro-participante', '/uatf-derecho']
   return rutasPublicas.includes(route.path)
 })
 

@@ -449,7 +449,7 @@ const exportarDatos = async () => {
 
 const abrirFormularioPublico = () => {
   // Abrir la ruta de Vue Router, no el archivo HTML estático
-  const url = window.location.origin + '/premios-feipobol'
+  const url = window.location.origin + '/uatf-derecho'
   window.open(url, '_blank')
 }
 

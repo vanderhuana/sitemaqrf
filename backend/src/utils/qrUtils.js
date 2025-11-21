@@ -304,8 +304,9 @@ const generateVIPCredentialImage = async (credencial, options = {}) => {
       qrSize = 650, // QR más grande
       qrX = null, // posición X del QR (null = centrado)
       qrY = 1020,
-      showNumber = false, // No mostrar número
-      numberY = 1720, // Posición del número (no se usa si showNumber = false)
+      showNumber = false, // Mostrar número correlativo
+      numeroCredencial = null, // Número de credencial para mostrar
+      numberY = 1720, // Posición del número
       outputPath = null // si se proporciona, guarda el archivo
     } = options;
 
@@ -334,8 +335,16 @@ const generateVIPCredentialImage = async (credencial, options = {}) => {
     const metadata = await baseImage.metadata();
     const { width: imageWidth, height: imageHeight } = metadata;
 
+    // Formatear número de credencial con ceros a la izquierda (00001)
+    const numeroFormateado = numeroCredencial ? String(numeroCredencial).padStart(5, '0') : '';
+    
+    // Crear contenido del QR incluyendo el número
+    const qrContent = numeroCredencial 
+      ? `${credencial.qrCode}|NUM:${numeroFormateado}`
+      : credencial.qrCode;
+
     // Generar el código QR como buffer PNG
-    const qrBuffer = await qrcode.toBuffer(credencial.qrCode, {
+    const qrBuffer = await qrcode.toBuffer(qrContent, {
       errorCorrectionLevel: 'H',
       margin: 1,
       width: qrSize,
@@ -348,7 +357,7 @@ const generateVIPCredentialImage = async (credencial, options = {}) => {
     // Calcular posición X centrada si no se especifica
     const qrXPosition = qrX !== null ? qrX : Math.floor((imageWidth - qrSize) / 2);
 
-    // Componer la imagen final - solo QR, sin número
+    // Componer la imagen final
     const compositeOperations = [
       {
         input: qrBuffer,
@@ -356,6 +365,27 @@ const generateVIPCredentialImage = async (credencial, options = {}) => {
         left: qrXPosition
       }
     ];
+
+    // Si se debe mostrar el número, agregarlo como texto
+    if (showNumber && numeroFormateado) {
+      // Crear SVG con el número
+      const textSvg = `
+        <svg width="${imageWidth}" height="100">
+          <text x="50%" y="50" 
+                text-anchor="middle" 
+                font-family="Arial, sans-serif" 
+                font-size="72" 
+                font-weight="bold" 
+                fill="#000000">${numeroFormateado}</text>
+        </svg>
+      `;
+      
+      compositeOperations.push({
+        input: Buffer.from(textSvg),
+        top: numberY,
+        left: 0
+      });
+    }
 
     let finalImage = baseImage.composite(compositeOperations);
 

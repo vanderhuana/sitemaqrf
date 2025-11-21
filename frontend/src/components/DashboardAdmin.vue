@@ -190,8 +190,8 @@
           </button>
           
           <button 
-            @click="cambiarSeccion('premios-feipobol')"
-            :class="{ active: seccionActiva === 'premios-feipobol' }"
+            @click="cambiarSeccion('uatf-derecho')"
+            :class="{ active: seccionActiva === 'uatf-derecho' }"
             class="nav-item sub-item"
           >
             🏆 Premios FEIPOBOL
@@ -229,7 +229,7 @@
         <h1 v-else-if="seccionActiva === 'trabajadores'">LISTA DE TRABAJADORES</h1>
         <h1 v-else-if="seccionActiva === 'participantes'">LISTA DE PARTICIPANTES</h1>
         <h1 v-else-if="seccionActiva === 'registro-feipobol'">REGISTRO FEIPOBOL 2025</h1>
-        <h1 v-else-if="seccionActiva === 'premios-feipobol'">🏆 GESTIÓN DE PREMIOS FEIPOBOL</h1>
+        <h1 v-else-if="seccionActiva === 'uatf-derecho'">🏆 GESTIÓN DE PREMIOS UATF DERECHO</h1>
         <h1 v-else-if="seccionActiva === 'credenciales-vip'">🎖️ CREDENCIALES VIP</h1>
         <h1 v-else>PANEL ADMINISTRADOR</h1>
       </header>
@@ -758,7 +758,7 @@
       </section>
 
       <!-- SECCIÓN PREMIOS FEIPOBOL -->
-      <section v-else-if="seccionActiva === 'premios-feipobol'" class="seccion-contenido">
+      <section v-else-if="seccionActiva === 'uatf-derecho'" class="seccion-contenido">
         <PremiosFeipobol />
       </section>
 
@@ -2477,7 +2477,7 @@ const abrirPremiosFeipobol = () => {
   console.log('🏆 Intentando navegar a Premios FEIPOBOL')
   console.log('Router disponible:', router)
   try {
-    router.push('/admin/premios-feipobol')
+    router.push('/admin/uatf-derecho')
     console.log('✅ Navegación iniciada')
   } catch (error) {
     console.error('❌ Error en navegación:', error)

@@ -426,12 +426,18 @@ module.exports = {
         templateType: credencial.tipo,
         qrSize: 650,
         qrY: 1020,
-        showNumber: false
+        showNumber: true, // Mostrar el número en la imagen
+        numeroCredencial: credencial.numeroCredencial,
+        numberY: 1700 // Posición debajo del QR (QR está en 1020, con tamaño 650 termina en ~1670)
       });
+
+      // Formatear número de credencial con ceros a la izquierda (00001)
+      const numeroFormateado = String(credencial.numeroCredencial).padStart(5, '0');
+      const tipoAbreviado = credencial.tipo === 'SUPER_VIP' ? 'SUPERVIP' : 'VIP';
 
       // Configurar headers para descarga
       res.setHeader('Content-Type', 'image/png');
-      res.setHeader('Content-Disposition', `attachment; filename="credencial-${credencial.tipo}-${credencial.numeroCredencial}.png"`);
+      res.setHeader('Content-Disposition', `attachment; filename="credencial-${tipoAbreviado}-${numeroFormateado}.png"`);
       
       // Enviar la imagen
       res.send(imageBuffer);
