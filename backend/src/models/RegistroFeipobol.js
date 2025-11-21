@@ -40,8 +40,8 @@ module.exports = (sequelize) => {
           const m = hoy.getMonth() - fechaNac.getMonth();
           const edadReal = (m < 0 || (m === 0 && hoy.getDate() < fechaNac.getDate())) ? edad - 1 : edad;
           
-          if (edadReal < 18) {
-            throw new Error('Debe ser mayor de 18 años');
+          if (edadReal < 15) {
+            throw new Error('Debe ser mayor de 15 años');
           }
         }
       }

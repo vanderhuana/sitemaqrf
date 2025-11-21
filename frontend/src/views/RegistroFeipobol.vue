@@ -87,13 +87,11 @@
                   :max="fechaMaxima"
                 />
                 <span v-if="formData.fechaNacimiento && !errores.fechaNacimiento" class="icono-validacion valido">✓</span>
-                <span v-if="errores.fechaNacimiento" class="icono-validacion error">✗</span>
-              </div>
-              <span v-if="errores.fechaNacimiento" class="mensaje-error">{{ errores.fechaNacimiento }}</span>
-              <span v-else class="mensaje-ayuda">Debe ser mayor de 18 años</span>
+              <span v-if="errores.fechaNacimiento" class="icono-validacion error">✗</span>
             </div>
-
-            <div class="form-group">
+            <span v-if="errores.fechaNacimiento" class="mensaje-error">{{ errores.fechaNacimiento }}</span>
+            <span v-else class="mensaje-ayuda">Debe ser mayor de 15 años</span>
+          </div>            <div class="form-group">
               <label>Carrera: <span class="requerido">*</span></label>
               <div class="input-con-icono">
                 <select 
@@ -699,10 +697,10 @@ const errores = reactive({
   correo: ''
 })
 
-// Fecha máxima para validación (18 años atrás)
+// Fecha máxima para validación (15 años atrás)
 const fechaMaxima = computed(() => {
   const hoy = new Date()
-  hoy.setFullYear(hoy.getFullYear() - 18)
+  hoy.setFullYear(hoy.getFullYear() - 15)
   return hoy.toISOString().split('T')[0]
 })
 
@@ -823,8 +821,8 @@ const validarFechaNacimiento = () => {
   
   const edadReal = (m < 0 || (m === 0 && hoy.getDate() < fechaNac.getDate())) ? edad - 1 : edad
   
-  if (edadReal < 18) {
-    errores.fechaNacimiento = 'Debes ser mayor de 18 años'
+  if (edadReal < 15) {
+    errores.fechaNacimiento = 'Debes ser mayor de 15 años'
     return false
   }
   

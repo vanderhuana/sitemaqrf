@@ -374,16 +374,16 @@ const createRegistroFeipobol = async (req, res) => {
       });
     }
 
-    // Validar que sea mayor de 18 años
+    // Validar que sea mayor de 15 años
     const hoy = new Date();
     const fechaNac = new Date(fechaNacimiento);
     const edad = hoy.getFullYear() - fechaNac.getFullYear();
     const m = hoy.getMonth() - fechaNac.getMonth();
     const edadReal = (m < 0 || (m === 0 && hoy.getDate() < fechaNac.getDate())) ? edad - 1 : edad;
     
-    if (edadReal < 18) {
+    if (edadReal < 15) {
       return res.status(400).json({
-        error: 'Debe ser mayor de 18 años para registrarse'
+        error: 'Debe ser mayor de 15 años para registrarse'
       });
     }
 
