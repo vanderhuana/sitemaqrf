@@ -3,10 +3,7 @@
     <!-- Header FEIPOBOL -->
     <header class="header-feipobol">
       <div class="logo-container">
-        <div class="header-text">
-          <h1>UATF DERECHO</h1>
-          <p>UATF DERECHO</p>
-        </div>
+        <img src="@/assets/logoderecho.png" alt="UATF Derecho" class="logo-header" />
       </div>
     </header>
 
@@ -260,6 +257,13 @@
             <span>{{ mensaje.texto }}</span>
           </div>
           <button @click="cerrarMensaje" class="btn-cerrar-mensaje">×</button>
+        </div>
+      </div>
+
+      <!-- Sección derecha con logo -->
+      <div class="seccion-logo">
+        <div class="logo-contenedor-derecha">
+          <img src="@/assets/derechoimagen.png" alt="UATF Derecho" class="logo-principal" />
         </div>
       </div>
     </div>
@@ -1592,6 +1596,7 @@ onMounted(() => {
 .logo-container {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 20px;
   max-width: 1200px;
   margin: 0 auto;
@@ -1606,6 +1611,13 @@ onMounted(() => {
   padding: 12px;
   border-radius: 15px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+}
+
+.logo-header {
+  height: 80px;
+  width: auto;
+  max-width: 600px;
+  object-fit: contain;
 }
 
 .header-text h1 {
