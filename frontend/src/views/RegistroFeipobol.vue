@@ -3,7 +3,7 @@
     <!-- Header FEIPOBOL -->
     <header class="header-feipobol">
       <div class="logo-container">
-        <img src="@/assets/logoderecho.png" alt="UATF Derecho" class="logo-header" />
+        <img src="@/assets/logoder.png" alt="UATF Derecho" class="logo-header" />
       </div>
     </header>
 
