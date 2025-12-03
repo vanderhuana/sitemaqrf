@@ -27,6 +27,17 @@ router.get('/pdf',
 );
 
 /**
+ * @route GET /api/reports/excel
+ * @desc Generar reporte Excel
+ * @access Admin
+ */
+router.get('/excel', 
+  authenticateToken, 
+  requireAdmin, 
+  ReportController.generateExcel
+);
+
+/**
  * @route GET /api/reports/validate/:codigoQR
  * @desc Validar credenciales de un código QR
  * @access Admin, Control

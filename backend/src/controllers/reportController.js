@@ -192,7 +192,7 @@ class ReportController {
           {
             model: Event,
             as: 'Event',
-            attributes: ['id', 'name', 'date', 'location']
+            attributes: ['id', 'name', 'startDate', 'location']
           },
           {
             model: User,
@@ -201,7 +201,7 @@ class ReportController {
           }
         ],
         order: [['saleDate', 'DESC']],
-        limit: 1000 // Límite para PDF
+        limit: 1000 // Limite para PDF
       });
 
       const estadisticas = await ReportController.getEstadisticas(whereConditions);
@@ -216,29 +216,29 @@ class ReportController {
       // Pipe del PDF a la respuesta
       doc.pipe(res);
 
-      // Título del reporte
-      doc.fontSize(20).text(titulo, { align: 'center' });
+      // Titulo del reporte
+      doc.fontSize(20).fillColor('#2E4A8B').text(titulo, { align: 'center' });
       doc.moveDown();
 
-      // Información del reporte
-      doc.fontSize(12);
+      // Informacion del reporte
+      doc.fontSize(12).fillColor('#333');
       if (fechaInicio && fechaFin) {
-        doc.text(`Período: ${fechaInicio} - ${fechaFin}`);
+        doc.text(`Periodo: ${fechaInicio} - ${fechaFin}`);
       }
-      doc.text(`Generado: ${new Date().toLocaleString()}`);
+      doc.text(`Generado: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`);
       doc.text(`Total de registros: ${tickets.length}`);
       doc.moveDown();
 
-      // Estadísticas
-      doc.fontSize(16).text('📊 Estadísticas', { underline: true });
+      // Estadisticas
+      doc.fontSize(16).fillColor('#2E4A8B').text('ESTADISTICAS', { underline: true });
       doc.moveDown(0.5);
-      doc.fontSize(12);
+      doc.fontSize(12).fillColor('#333');
 
       // Por estado
       if (estadisticas.porEstado && estadisticas.porEstado.length > 0) {
         doc.text('Por Estado:');
         estadisticas.porEstado.forEach(item => {
-          doc.text(`  • ${item.estado}: ${item.cantidad}`, { indent: 20 });
+          doc.text(`  - ${item.estado}: ${item.cantidad}`, { indent: 20 });
         });
         doc.moveDown(0.5);
       }
@@ -250,32 +250,34 @@ class ReportController {
         doc.moveDown();
       }
 
-      // Nueva página para el detalle
+      // Nueva pagina para el detalle
       doc.addPage();
       
       // Tabla de tickets
-      doc.fontSize(16).text('📋 Detalle de Entradas', { underline: true });
+      doc.fontSize(16).fillColor('#2E4A8B').text('DETALLE DE ENTRADAS', { underline: true });
       doc.moveDown();
 
-      doc.fontSize(10);
+      doc.fontSize(10).fillColor('#333');
       let yPosition = 150;
       const lineHeight = 15;
 
       // Headers de tabla
-      doc.text('Código', 50, yPosition, { width: 70 });
+      doc.font('Helvetica-Bold');
+      doc.text('Codigo', 50, yPosition, { width: 70 });
       doc.text('Comprador', 120, yPosition, { width: 120 });
       doc.text('Evento', 240, yPosition, { width: 100 });
       doc.text('Precio', 340, yPosition, { width: 50 });
       doc.text('Estado', 390, yPosition, { width: 60 });
       doc.text('Fecha', 450, yPosition, { width: 80 });
+      doc.font('Helvetica');
 
       yPosition += lineHeight;
       doc.moveTo(50, yPosition).lineTo(550, yPosition).stroke();
       yPosition += 5;
 
       // Datos de tickets
-      tickets.slice(0, 50).forEach((ticket) => { // Límite para evitar PDFs muy grandes
-        if (yPosition > 700) { // Nueva página si es necesario
+      tickets.slice(0, 50).forEach((ticket) => { // Limite para evitar PDFs muy grandes
+        if (yPosition > 700) { // Nueva pagina si es necesario
           doc.addPage();
           yPosition = 50;
         }
@@ -285,8 +287,8 @@ class ReportController {
         const precio = ticket.salePrice ? `Bs. ${ticket.salePrice}` : 'N/A';
 
         doc.text(ticket.ticketNumber || 'N/A', 50, yPosition, { width: 70 });
-        doc.text(comprador, 120, yPosition, { width: 120 });
-        doc.text(evento, 240, yPosition, { width: 100 });
+        doc.text(comprador.substring(0, 20), 120, yPosition, { width: 120 });
+        doc.text(evento.substring(0, 15), 240, yPosition, { width: 100 });
         doc.text(precio, 340, yPosition, { width: 50 });
         doc.text(ticket.status || 'N/A', 390, yPosition, { width: 60 });
         doc.text(new Date(ticket.saleDate).toLocaleDateString(), 450, yPosition, { width: 80 });
@@ -295,9 +297,9 @@ class ReportController {
       });
 
       // Footer
-      doc.fontSize(8);
+      doc.fontSize(8).fillColor('#666');
       doc.text(
-        `Reporte generado el ${new Date().toLocaleString()} | Sistema QR FEIPOBOL`,
+        `Reporte generado el ${new Date().toLocaleDateString()} | Sistema SISQR6`,
         50,
         doc.page.height - 50,
         { align: 'center' }
@@ -308,9 +310,11 @@ class ReportController {
 
     } catch (error) {
       console.error('Error generando PDF:', error);
+      console.error('Stack:', error.stack);
       res.status(500).json({
         success: false,
-        message: 'Error generando reporte PDF'
+        message: 'Error generando reporte PDF',
+        error: error.message
       });
     }
   }
@@ -341,7 +345,7 @@ class ReportController {
           {
             model: Event,
             as: 'Event',
-            attributes: ['id', 'name', 'date', 'location']
+            attributes: ['id', 'name', 'startDate', 'location']
           },
           {
             model: User,
@@ -682,6 +686,131 @@ class ReportController {
       res.status(500).json({
         success: false,
         message: 'Error obteniendo opciones de filtros'
+      });
+    }
+  }
+
+  /**
+   * Generar reporte Excel de ventas
+   */
+  static async generateExcel(req, res) {
+    try {
+      const ExcelJS = require('exceljs');
+      const {
+        fechaInicio,
+        fechaFin,
+        estado,
+        eventId
+      } = req.query;
+
+      // Construir filtros
+      const whereConditions = {};
+      if (fechaInicio && fechaFin) {
+        whereConditions.saleDate = {
+          [Op.between]: [new Date(fechaInicio), new Date(fechaFin)]
+        };
+      }
+      if (estado) whereConditions.status = estado;
+      if (eventId) whereConditions.eventId = eventId;
+
+      // Obtener tickets
+      const tickets = await Ticket.findAll({
+        where: whereConditions,
+        include: [
+          {
+            model: Event,
+            as: 'Event',
+            attributes: ['id', 'name', 'startDate', 'location']
+          },
+          {
+            model: User,
+            as: 'Seller',
+            attributes: ['firstName', 'lastName']
+          }
+        ],
+        order: [['saleDate', 'DESC']]
+      });
+
+      // Crear workbook
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'SISQR6';
+      workbook.created = new Date();
+
+      const worksheet = workbook.addWorksheet('Reporte de Ventas');
+
+      // Estilos del encabezado
+      worksheet.columns = [
+        { header: 'Numero', key: 'numero', width: 15 },
+        { header: 'Comprador', key: 'comprador', width: 25 },
+        { header: 'Email', key: 'email', width: 25 },
+        { header: 'Telefono', key: 'telefono', width: 15 },
+        { header: 'Evento', key: 'evento', width: 25 },
+        { header: 'Precio (Bs)', key: 'precio', width: 12 },
+        { header: 'Estado', key: 'estado', width: 12 },
+        { header: 'Metodo Pago', key: 'metodoPago', width: 12 },
+        { header: 'Fecha Venta', key: 'fechaVenta', width: 18 },
+        { header: 'Vendedor', key: 'vendedor', width: 20 }
+      ];
+
+      // Estilo del header
+      worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFF' } };
+      worksheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: '2E4A8B' }
+      };
+      worksheet.getRow(1).alignment = { horizontal: 'center' };
+
+      // Agregar datos
+      tickets.forEach(ticket => {
+        worksheet.addRow({
+          numero: ticket.ticketNumber,
+          comprador: ticket.buyerName || 'N/A',
+          email: ticket.buyerEmail || 'N/A',
+          telefono: ticket.buyerPhone || 'N/A',
+          evento: ticket.Event?.name || 'N/A',
+          precio: parseFloat(ticket.salePrice) || 0,
+          estado: ticket.status,
+          metodoPago: ticket.paymentMethod || 'N/A',
+          fechaVenta: ticket.saleDate ? new Date(ticket.saleDate).toLocaleString('es-BO') : 'N/A',
+          vendedor: ticket.Seller ? `${ticket.Seller.firstName} ${ticket.Seller.lastName}` : 'N/A'
+        });
+      });
+
+      // Agregar fila de totales
+      const totalRow = worksheet.addRow({
+        numero: '',
+        comprador: 'TOTAL',
+        email: '',
+        telefono: '',
+        evento: `${tickets.length} entradas`,
+        precio: tickets.reduce((sum, t) => sum + (parseFloat(t.salePrice) || 0), 0),
+        estado: '',
+        metodoPago: '',
+        fechaVenta: '',
+        vendedor: ''
+      });
+      totalRow.font = { bold: true };
+      totalRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'E8F4FD' }
+      };
+
+      // Configurar headers de respuesta
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename=reporte_ventas_${Date.now()}.xlsx`);
+
+      // Enviar archivo
+      await workbook.xlsx.write(res);
+      res.end();
+
+    } catch (error) {
+      console.error('Error generando Excel:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error generando reporte Excel',
+        error: error.message
       });
     }
   }

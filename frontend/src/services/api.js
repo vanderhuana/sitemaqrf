@@ -1213,4 +1213,115 @@ export const credencialesVIPService = {
   }
 }
 
+// Servicio para reportes PDF
+export const pdfReportService = {
+  async getResumenGeneral() {
+    try {
+      const response = await apiClient.get('/api/pdf-reports/resumen')
+      return response.data
+    } catch (error) {
+      console.error('Error obteniendo resumen general:', error)
+      return { success: false, error: error.response?.data?.message || 'Error al obtener resumen' }
+    }
+  },
+
+  async getEstadisticasUsuarios() {
+    try {
+      const response = await apiClient.get('/api/pdf-reports/usuarios')
+      return response.data
+    } catch (error) {
+      console.error('Error obteniendo estadísticas de usuarios:', error)
+      return { success: false, error: error.response?.data?.message || 'Error al obtener estadísticas' }
+    }
+  },
+
+  async getEstadisticasEntradasQR() {
+    try {
+      const response = await apiClient.get('/api/pdf-reports/entradas-qr')
+      return response.data
+    } catch (error) {
+      console.error('Error obteniendo estadísticas de entradas QR:', error)
+      return { success: false, error: error.response?.data?.message || 'Error al obtener estadísticas' }
+    }
+  },
+
+  async getEstadisticasTrabajadores() {
+    try {
+      const response = await apiClient.get('/api/pdf-reports/trabajadores')
+      return response.data
+    } catch (error) {
+      console.error('Error obteniendo estadísticas de trabajadores:', error)
+      return { success: false, error: error.response?.data?.message || 'Error al obtener estadísticas' }
+    }
+  },
+
+  async getEstadisticasParticipantes() {
+    try {
+      const response = await apiClient.get('/api/pdf-reports/participantes')
+      return response.data
+    } catch (error) {
+      console.error('Error obteniendo estadísticas de participantes:', error)
+      return { success: false, error: error.response?.data?.message || 'Error al obtener estadísticas' }
+    }
+  },
+
+  async getEstadisticasRegistroFeipobol() {
+    try {
+      const response = await apiClient.get('/api/pdf-reports/feipobol')
+      return response.data
+    } catch (error) {
+      console.error('Error obteniendo estadísticas de FEIPOBOL:', error)
+      return { success: false, error: error.response?.data?.message || 'Error al obtener estadísticas' }
+    }
+  },
+
+  async getEstadisticasPremios() {
+    try {
+      const response = await apiClient.get('/api/pdf-reports/premios')
+      return response.data
+    } catch (error) {
+      console.error('Error obteniendo estadísticas de premios:', error)
+      return { success: false, error: error.response?.data?.message || 'Error al obtener estadísticas' }
+    }
+  },
+
+  async getEstadisticasCredencialesVIP() {
+    try {
+      const response = await apiClient.get('/api/pdf-reports/credenciales-vip')
+      return response.data
+    } catch (error) {
+      console.error('Error obteniendo estadísticas de credenciales VIP:', error)
+      return { success: false, error: error.response?.data?.message || 'Error al obtener estadísticas' }
+    }
+  },
+
+  getPDFUrl(modulo = 'general') {
+    const token = localStorage.getItem('sisqr_token') || localStorage.getItem('token')
+    return `${apiClient.defaults.baseURL}/api/pdf-reports/generar-pdf?modulo=${modulo}&token=${token}`
+  },
+
+  async descargarPDF(modulo = 'general') {
+    try {
+      const response = await apiClient.get(`/api/pdf-reports/generar-pdf?modulo=${modulo}`, {
+        responseType: 'blob'
+      })
+      
+      // Crear un enlace temporal para descargar
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `reporte_${modulo}_${Date.now()}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+      
+      return { success: true }
+    } catch (error) {
+      console.error('Error descargando PDF:', error)
+      return { success: false, error: error.response?.data?.message || 'Error al descargar PDF' }
+    }
+  }
+}
+
 export default apiClient

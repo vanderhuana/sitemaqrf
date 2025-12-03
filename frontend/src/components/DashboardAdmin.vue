@@ -91,6 +91,13 @@
           📊 REPORTES
         </button>
         <button 
+          @click="cambiarSeccion('reportes-pdf')" 
+          :class="{ active: seccionActiva === 'reportes-pdf' }"
+          class="nav-item nav-item-pdf"
+        >
+          📄 REPORTES PDF
+        </button>
+        <button 
           @click="cambiarSeccion('scanner')" 
           :class="{ active: seccionActiva === 'scanner' }"
           class="nav-item"
@@ -221,6 +228,7 @@
         <h1 v-if="seccionActiva === 'usuarios'">LISTA DE USUARIOS</h1>
         <h1 v-else-if="seccionActiva === 'reportes-ventas'">REPORTES DE VENTAS</h1>
         <h1 v-else-if="seccionActiva === 'reportes'">REPORTES COMPLETOS</h1>
+        <h1 v-else-if="seccionActiva === 'reportes-pdf'">📄 REPORTES PDF</h1>
         <h1 v-else-if="seccionActiva === 'eventos'">GESTIÓN DE EVENTOS</h1>
         <h1 v-else-if="seccionActiva === 'vender'">VENDER ENTRADA</h1>
         <h1 v-else-if="seccionActiva === 'generar-qr'">GENERADOR DE ENTRADAS QR</h1>
@@ -624,6 +632,11 @@
       <!-- SECCIÓN REPORTES -->
       <section v-else-if="seccionActiva === 'reportes'" class="seccion-contenido">
         <ReportsManager />
+      </section>
+      
+      <!-- SECCIÓN REPORTES PDF -->
+      <section v-else-if="seccionActiva === 'reportes-pdf'" class="seccion-contenido">
+        <PDFReportsModule />
       </section>
       
       <!-- SECCIÓN ESCÁNER QR -->
@@ -1421,6 +1434,7 @@ import CredencialesVIP from '@/views/admin/CredencialesVIP.vue'
 import GeneradorQREntradas from './GeneradorQREntradas.vue'
 import BackupManager from './BackupManager.vue'
 import ReportsManager from './ReportsManager.vue'
+import PDFReportsModule from './PDFReportsModule.vue'
 import jsQR from 'jsqr'
 
 const router = useRouter()
@@ -3621,6 +3635,22 @@ const usarDatosSimulados = () => {
   background: linear-gradient(135deg, #FF8C42 0%, #FFA356 100%);
   transform: translateX(5px);
   box-shadow: 0 6px 12px rgba(255, 107, 53, 0.4);
+}
+
+.nav-item-pdf {
+  background: linear-gradient(135deg, #2E4A8B 0%, #4a6eb8 100%);
+  border-radius: 8px;
+  margin: 5px 15px;
+  padding: 15px 20px;
+  font-weight: 700;
+  box-shadow: 0 4px 8px rgba(46, 74, 139, 0.3);
+  border-left: 4px solid transparent;
+}
+
+.nav-item-pdf:hover {
+  background: linear-gradient(135deg, #4a6eb8 0%, #5c82cc 100%);
+  transform: translateX(5px);
+  box-shadow: 0 6px 12px rgba(46, 74, 139, 0.4);
 }
 
 /* Control de Acceso Toggle */

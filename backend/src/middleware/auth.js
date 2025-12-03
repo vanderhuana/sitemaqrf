@@ -19,9 +19,15 @@ const authenticateToken = async (req, res, next) => {
   try {
     console.log('🔐 authenticateToken - Ruta:', req.method, req.originalUrl);
     
-    // Obtener el token del header Authorization
+    // Obtener el token del header Authorization O del query parameter (para descargas PDF)
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    let token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    
+    // Si no hay token en header, intentar obtenerlo del query parameter
+    if (!token && req.query.token) {
+      token = req.query.token;
+      console.log('🔑 Token obtenido de query parameter');
+    }
     
     console.log('🔑 Token presente:', !!token);
     

@@ -84,23 +84,31 @@
           class="btn-primary"
           :disabled="cargando"
         >
-          <span v-if="cargando">🔄 Cargando...</span>
-          <span v-else>🔍 Aplicar Filtros</span>
+          <span v-if="cargando">Cargando...</span>
+          <span v-else>Aplicar Filtros</span>
         </button>
         
         <button 
           @click="limpiarFiltros" 
           class="btn-secondary"
         >
-          🗑️ Limpiar
+          Limpiar
+        </button>
+        
+        <button 
+          @click="generarExcel" 
+          class="btn-success"
+          :disabled="!reportData.tickets || reportData.tickets.length === 0"
+        >
+          Descargar Excel
         </button>
         
         <button 
           @click="generarPDF" 
-          class="btn-success"
+          class="btn-info"
           :disabled="!reportData.tickets || reportData.tickets.length === 0"
         >
-          📄 Descargar PDF
+          Descargar PDF
         </button>
       </div>
     </div>
@@ -714,21 +722,43 @@ export default {
             queryParams.append(key, this.filters[key]);
           }
         });
-        queryParams.append('titulo', 'Reporte de Entradas - ' + new Date().toLocaleDateString());
+        
+        // Agregar token para autenticación
+        const token = localStorage.getItem('sisqr_token') || localStorage.getItem('token');
+        queryParams.append('token', token);
 
         const url = `/api/reports/pdf?${queryParams.toString()}`;
         
-        // Crear un enlace temporal para descargar
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `reporte_${Date.now()}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Abrir en nueva ventana para descargar
+        window.open(url, '_blank');
         
       } catch (error) {
         console.error('Error generando PDF:', error);
         alert('Error al generar el PDF');
+      }
+    },
+
+    async generarExcel() {
+      try {
+        const queryParams = new URLSearchParams();
+        Object.keys(this.filters).forEach(key => {
+          if (this.filters[key] && key !== 'page' && key !== 'limit') {
+            queryParams.append(key, this.filters[key]);
+          }
+        });
+        
+        // Agregar token para autenticación
+        const token = localStorage.getItem('sisqr_token') || localStorage.getItem('token');
+        queryParams.append('token', token);
+
+        const url = `/api/reports/excel?${queryParams.toString()}`;
+        
+        // Abrir en nueva ventana para descargar
+        window.open(url, '_blank');
+        
+      } catch (error) {
+        console.error('Error generando Excel:', error);
+        alert('Error al generar el Excel');
       }
     },
 
@@ -1020,6 +1050,15 @@ export default {
   background: #229954;
 }
 
+.btn-info {
+  background: #3498db;
+  color: white;
+}
+
+.btn-info:hover:not(:disabled) {
+  background: #2980b9;
+}
+
 .btn-validate {
   background: #f39c12;
   color: white;
@@ -1031,7 +1070,7 @@ export default {
   background: #e67e22;
 }
 
-.btn-primary:disabled, .btn-success:disabled {
+.btn-primary:disabled, .btn-success:disabled, .btn-info:disabled {
   background: #bdc3c7;
   cursor: not-allowed;
 }
